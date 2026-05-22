@@ -4508,8 +4508,8 @@
             // Validate still a participant
             if (!participants.find(function (p) { return p.name === chatName; })) {
                 chatName = ''; localStorage.removeItem('chat_name');
-                appendSysMsg('⚠️ Participant introuvable. Ajoute-toi dans la Caisse familiale d'abord.');
-        return;
+                appendSysMsg('⚠️ Participant introuvable. Ajoute-toi dans la Caisse familiale, ajoute ton nom d’abord.');
+                return;
             }
             var nb = document.getElementById('chatNameBar'); if (nb) nb.style.display = 'none';
             updateChatHeader();
@@ -4588,7 +4588,7 @@
             var bubble = document.createElement('div');
             bubble.className = 'chat-bubble';
             bubble.textContent = msg.text;
-            if (isMine) bubble.style.background = 'linear-gradient(135deg,' + color + ',' + color + 'cc)';
+            if (isMine) bubble.style.background = color;
             body.appendChild(bubble);
 
             var meta = document.createElement('div');
