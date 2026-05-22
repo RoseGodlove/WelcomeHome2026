@@ -1775,10 +1775,6 @@
                     grid-template-columns: 1fr 1fr 1fr
                 }
         }
-        /* SAFE */
-        .safe {
-            height: 40px
-        }
 
         /* ===== LIGHTBOX ===== */
         .lightbox {
@@ -1828,8 +1824,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            cursor: pointer;
-            backdrop-filter: blur(8px)
+            cursor: pointer
         }
 
         .lightbox-caption {
@@ -1855,56 +1850,14 @@
                 height: 52px;
                 border-radius: 10px;
                 object-fit: cover;
-                cursor: zoom-in;
-                transition: transform .2s
+                cursor: zoom-in
             }
-
-                .item-img-wrap .item-img:active {
-                    transform: scale(.93)
-                }
-
         /* ===== PHOTO UPLOAD ===== */
-        .photo-upload-zone {
-            width: 100%;
-            border: 2px dashed var(--be);
-            border-radius: 10px;
-            padding: 14px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            transition: border-color .2s,background .2s;
-            margin-bottom: 10px;
-            background: rgba(255,255,255,.5)
-        }
-
-            .photo-upload-zone:active, .photo-upload-zone.drag {
-                border-color: var(--br);
-                background: rgba(196,149,106,.06)
-            }
-
-        .photo-upload-icon {
-            font-size: 28px
-        }
-
-        .photo-upload-label {
-            font-size: 12px;
-            color: var(--pi);
-            text-align: center;
-            line-height: 1.5
-        }
-
-            .photo-upload-label strong {
-                color: var(--brd);
-                display: block;
-                margin-bottom: 2px
-            }
-
         .photo-upload-btns {
             display: flex;
             gap: 8px;
-            width: 100%
+            width: 100%;
+            margin-bottom: 10px
         }
 
         .photo-btn {
@@ -1916,7 +1869,6 @@
             color: var(--ad);
             font-size: 11px;
             font-weight: 500;
-            letter-spacing: .5px;
             cursor: pointer;
             text-align: center;
             font-family: 'Jost',sans-serif;
@@ -1924,7 +1876,7 @@
             align-items: center;
             justify-content: center;
             gap: 5px;
-            transition: background .2s,border-color .2s
+            transition: background .2s
         }
 
             .photo-btn:active {
@@ -1973,8 +1925,7 @@
         .hidden-file-input {
             display: none
         }
-
-        /* ===== DELETE BUTTON ===== */
+        /* ===== DELETE ===== */
         .ep-delete {
             width: 100%;
             margin-top: 6px;
@@ -2000,12 +1951,11 @@
             background: rgba(185,30,30,.18) !important;
             border-color: rgba(185,30,30,.5) !important
         }
-
         /* ===== CHAT ===== */
         .chat-fab {
             position: fixed;
             right: 18px;
-            bottom: 72px;
+            bottom: 80px;
             z-index: 460;
             width: 52px;
             height: 52px;
@@ -2036,10 +1986,9 @@
             color: #fff;
             font-size: 9px;
             font-weight: 700;
-            display: flex;
+            display: none;
             align-items: center;
-            justify-content: center;
-            display: none
+            justify-content: center
         }
 
             .chat-badge.on {
@@ -2170,8 +2119,7 @@
             background: var(--bl);
             color: var(--ad);
             border: 1px solid rgba(200,191,180,.3);
-            border-bottom-left-radius: 4px;
-            box-shadow: 0 2px 8px rgba(44,40,37,.06)
+            border-bottom-left-radius: 4px
         }
 
         .chat-msg-meta {
@@ -2182,16 +2130,6 @@
 
         .chat-msg.mine .chat-msg-meta {
             text-align: right
-        }
-
-        .chat-date-sep {
-            text-align: center;
-            font-size: 10px;
-            color: var(--pi);
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            margin: 6px 0;
-            opacity: .7
         }
 
         .chat-system {
@@ -2322,8 +2260,12 @@
             font-size: 11px;
             font-weight: 500;
             cursor: pointer;
-            font-family: 'Jost',sans-serif;
-            letter-spacing: .5px
+            font-family: 'Jost',sans-serif
+        }
+
+        /* SAFE */
+        .safe {
+            height: 40px
         }
     </style>
 </head>
@@ -3740,27 +3682,23 @@
             if (lb) lb.classList.remove('on');
             document.body.style.overflow = '';
         }
-        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
 
         // ===================== PHOTO UPLOAD =====================
         function _sid(id) { return String(id).replace(/[^a-zA-Z0-9_-]/g, '_'); }
         function buildPhotoUploadSection(itemId, currentImg) {
             const sid = _sid(itemId);
             const hasImg = !!(currentImg && currentImg.length > 2);
-            const safeImg = hasImg ? currentImg.replace(/"/g, '&quot;').replace(/'/g, '\u0027') : '';
-            return `<div class="ep-label" style="margin-bottom:5px">Photo</div>
-      <div class="photo-preview ${hasImg ? 'on' : ''}" id="pp-${sid}">
-        <img src="${safeImg}" id="ppi-${sid}" style="cursor:zoom-in;width:100%;max-height:180px;object-fit:cover;border-radius:10px;display:block"
-          onclick="openLightbox(this.src,'Photo')">
-        <button class="photo-preview-remove" onclick="removePhoto('${sid}')">✕</button>
-      </div>
-      <div class="photo-upload-btns" id="pb-${sid}" ${hasImg ? 'style="display:none"' : ''}>
-        <button class="photo-btn" onclick="triggerCamera('${sid}')">📷 Caméra</button>
-        <button class="photo-btn" onclick="triggerFile('${sid}')">🖼 Fichier</button>
-      </div>
-      <input class="hidden-file-input" type="file" accept="image/*" id="fi-${sid}" onchange="handleFileInput(event,'${sid}')">
-      <input class="hidden-file-input" type="file" accept="image/*" capture="environment" id="ci-${sid}" onchange="handleFileInput(event,'${sid}')">
-      <input type="hidden" id="inp-img-${sid}" value="${safeImg}">`;
+            const safeImg = hasImg ? currentImg.replace(/"/g, '&quot;').replace(/'/g, "\u0027") : '';
+            return '<div class="ep-label" style="margin-bottom:5px">Photo</div>'
+                + '<div class="photo-preview ' + (hasImg ? 'on' : '') + '" id="pp-' + sid + '">'
+                + '<img src="' + safeImg + '" id="ppi-' + sid + '" style="cursor:zoom-in;width:100%;max-height:180px;object-fit:cover;border-radius:10px;display:block" onclick="openLightbox(this.src,'Photo')">'
+                    + '<button class="photo-preview-remove" onclick="removePhoto(''+sid+'')">\u2715</button></div>'
+                        + '<div class="photo-upload-btns" id="pb-' + sid + '" ' + (hasImg ? 'style="display:none"' : '') + '>'
+                        + '<button class="photo-btn" onclick="triggerCamera(''+sid+'')">\uD83D\uDCF7 Cam\u00e9ra</button>'
+                            + '<button class="photo-btn" onclick="triggerFile(''+sid+'')">\uD83D\uDDBC Fichier</button></div>'
+                                + '<input class="hidden-file-input" type="file" accept="image/*" id="fi-' + sid + '" onchange="handleFileInput(event,''+sid+'')">'
+                                    + '<input class="hidden-file-input" type="file" accept="image/*" capture="environment" id="ci-' + sid + '" onchange="handleFileInput(event,''+sid+'')">'
+                                        + '<input type="hidden" id="inp-img-' + sid + '" value="' + safeImg + '">';
         }
         function triggerCamera(sid) { document.getElementById('ci-' + sid)?.click(); }
         function triggerFile(sid) { document.getElementById('fi-' + sid)?.click(); }
@@ -3771,8 +3709,7 @@
             r.readAsDataURL(file);
         }
         function setItemPhoto(sid, data) {
-            const pimg = document.getElementById('ppi-' + sid);
-            if (pimg) pimg.src = data;
+            const pimg = document.getElementById('ppi-' + sid); if (pimg) pimg.src = data;
             document.getElementById('pp-' + sid)?.classList.add('on');
             const pb = document.getElementById('pb-' + sid); if (pb) pb.style.display = 'none';
             const h = document.getElementById('inp-img-' + sid); if (h) h.value = data;
@@ -3798,11 +3735,11 @@
             Object.keys(customItems).forEach(rk => { customItems[rk] = (customItems[rk] || []).filter(i => i.id !== id); });
             delete state[id]; delete _dc[id];
             saveCustomItems(); save();
-            buildPhaseNav(roomKey); window.buildItems(roomKey); updateHero();
+            buildPhaseNav(roomKey); buildItemsNew(roomKey); updateHero();
         }
 
         // ===================== ENHANCED BUILD ITEMS =====================
-        window.buildItems = function (roomKey) {
+        function buildItemsNew(roomKey) {
             const phase = currentPhase[roomKey] || 'j1';
             const cont = document.getElementById('items-' + roomKey);
             if (!cont) return;
@@ -3819,64 +3756,50 @@
                 const statusLabel = status === 'done' ? 'Achet\u00e9' : status === 'urgent' ? 'Urgent' : '\u00c0 acheter';
                 const statusCls = 'item-status st-' + status;
                 const sid = _sid(item.id);
-                const imgQ = imageSrc.replace(/"/g, '&quot;');
-                const imgS = imageSrc.replace(/'/g, '\u0027');
                 const nameE = esc(item.name);
                 const idE = esc(item.id);
+                const imgQ = imageSrc.replace(/"/g, '&quot;');
+                const imgS = imageSrc.replace(/'/g, "\u0027");
                 const imageHtml = imageSrc
-                    ? `<div class="item-img-wrap"><img class="item-img" src="${imgQ}" alt="${nameE}" style="cursor:zoom-in" onclick="event.stopPropagation();openLightbox('${imgS}','${nameE}')" onerror="fallbackImage(this,'${nameE}')"></div>`
-                    : `<div class="item-img-wrap"><div class="item-img img-fallback">${nameE.slice(0, 1) || '?'}</div></div>`;
-                return `<div class="item ${item.custom ? 'item-custom' : ''}" id="card-${sid}">
-          <div class="item-head" onclick="toggleItem('${idE}')">
-            ${imageHtml}
-            <div class="item-info">
-              <div class="item-name">${nameE}</div>
-              <div class="item-store-row">
-                <div class="item-store-dot" style="background:${dot}"></div>
-                <div class="item-store-name">${esc(store)}</div>
-                ${payerName ? `<div class="payer-tag">Pay\u00e9/pr\u00e9vu par ${esc(payerName)}</div>` : ''}
-              </div>
-            </div>
-            <div class="item-right">
-              <div class="item-price">${fmt(price)}</div>
-              <div class="${statusCls}">${statusLabel}</div>
-              <div class="expand-icon">&#9662;</div>
-            </div>
-          </div>
-          <div class="edit-panel">
-            <div class="ep-label">Statut</div>
-            <div class="ep-status-row">
-              <div class="ep-st-btn ${status === 'pending' ? 'on-pending' : ''}" onclick="setStatus('${idE}','pending')">\u00c0 acheter</div>
-              <div class="ep-st-btn ${status === 'urgent' ? 'on-urgent' : ''}" onclick="setStatus('${idE}','urgent')">Urgent</div>
-              <div class="ep-st-btn ${status === 'done' ? 'on-done' : ''}" onclick="setStatus('${idE}','done')">Achet\u00e9 &#10003;</div>
-            </div>
-            <div class="ep-row">
-              <div class="ep-col">
-                <div class="ep-label">Prix r\u00e9el ($)</div>
-                <input class="ep-input" type="number" id="inp-price-${sid}" value="${price}" placeholder="Ex: 349">
-              </div>
-              <div class="ep-col">
-                <div class="ep-label">Magasin choisi</div>
-                <select class="ep-select" id="inp-store-${sid}">${getStoreOptions(store)}</select>
-              </div>
-            </div>
-            <div class="ep-row">
-              <div class="ep-col">
-                <div class="ep-label">Pay\u00e9 / pr\u00e9vu par</div>
-                <select class="ep-select" id="inp-payer-${sid}">${getParticipantOptions(payer, true)}</select>
-              </div>
-            </div>
-            ${buildPhotoUploadSection(sid, imageSrc)}
-            ${item.tip ? `<div class="ep-tip">&#128161; ${esc(item.tip)}</div>` : ''}
-            <button class="ep-save" onclick="saveItemEnh('${idE}','${sid}','${roomKey}')">Enregistrer</button>
-            <button class="ep-delete" onclick="deleteItem('${idE}','${roomKey}')">Supprimer cet \u00e9quipement</button>
-          </div>
-        </div>`;
-            }).join('');
-            cont.innerHTML = buildAddEquipmentForm(roomKey) + listHtml;
-            buildTotals(roomKey);
-            setTimeout(prepareReveals, 20);
-        };
+                    ? '<div class="item-img-wrap"><img class="item-img" src="' + imgQ + '" alt="' + nameE + '" style="cursor:zoom-in" onclick="event.stopPropagation();openLightbox(''+imgS+'',''+nameE+'')" onerror="fallbackImage(this,''+nameE+'')"></div>'
+          : '<div class="item-img-wrap"><div class="item-img img-fallback">' + (nameE.slice(0, 1) || '?') + '</div></div>';
+            return '<div class="item ' + (item.custom ? 'item-custom' : '') + '" id="card-' + sid + '">'
+                + '<div class="item-head" onclick="toggleItem(''+idE+'')">'
+                    + imageHtml
+                    + '<div class="item-info"><div class="item-name">' + nameE + '</div>'
+                    + '<div class="item-store-row"><div class="item-store-dot" style="background:' + dot + '"></div>'
+                    + '<div class="item-store-name">' + esc(store) + '</div>'
+                    + (payerName ? '<div class="payer-tag">Pay\u00e9/pr\u00e9vu par ' + esc(payerName) + '</div>' : '')
+                    + '</div></div>'
+                    + '<div class="item-right"><div class="item-price">' + fmt(price) + '</div>'
+                    + '<div class="' + statusCls + '">' + statusLabel + '</div>'
+                    + '<div class="expand-icon">&#9662;</div></div></div>'
+                    + '<div class="edit-panel">'
+                    + '<div class="ep-label">Statut</div>'
+                    + '<div class="ep-status-row">'
+                    + '<div class="ep-st-btn ' + (status === 'pending' ? 'on-pending' : '') + '" onclick="setStatus(''+idE+'','pending')">\u00c0 acheter</div>'
+                        + '<div class="ep-st-btn ' + (status === 'urgent' ? 'on-urgent' : '') + '" onclick="setStatus(''+idE+'','urgent')">Urgent</div>'
+                            + '<div class="ep-st-btn ' + (status === 'done' ? 'on-done' : '') + '" onclick="setStatus(''+idE+'','done')">Achet\u00e9 &#10003;</div>'
+                                + '</div>'
+                                + '<div class="ep-row"><div class="ep-col"><div class="ep-label">Prix r\u00e9el ($)</div>'
+                                + '<input class="ep-input" type="number" id="inp-price-' + sid + '" value="' + price + '" placeholder="Ex: 349"></div>'
+                                + '<div class="ep-col"><div class="ep-label">Magasin choisi</div>'
+                                + '<select class="ep-select" id="inp-store-' + sid + '">' + getStoreOptions(store) + '</select></div></div>'
+                                + '<div class="ep-row"><div class="ep-col"><div class="ep-label">Pay\u00e9 / pr\u00e9vu par</div>'
+                                + '<select class="ep-select" id="inp-payer-' + sid + '">' + getParticipantOptions(payer, true) + '</select></div></div>'
+                                + buildPhotoUploadSection(sid, imageSrc)
+                                + (item.tip ? '<div class="ep-tip">&#128161; ' + esc(item.tip) + '</div>' : '')
+                                + '<button class="ep-save" onclick="saveItemEnh(''+idE+'',''+sid+'',''+roomKey+'')">Enregistrer</button>'
+                                    + '<button class="ep-delete" onclick="deleteItem(''+idE+'',''+roomKey+'')">Supprimer cet \u00e9quipement</button>'
+                                        + '</div></div>';
+        }).join('');
+        cont.innerHTML = buildAddEquipmentForm(roomKey) + listHtml;
+        buildTotals(roomKey);
+        setTimeout(prepareReveals, 20);
+}
+        // Override buildItems
+        const _origBI = buildItems;
+        window.buildItems = buildItemsNew;
 
         function saveItemEnh(id, sid, roomKey) {
             if (!state[id]) state[id] = {};
@@ -3889,82 +3812,66 @@
             if (img) state[id].img = img.value;
             if (pay) state[id].payer = pay.value;
             Object.values(customItems).forEach(arr => { const ci = (arr || []).find(i => i.id === id); if (ci && img) ci.img = img.value; });
-            save(); window.buildItems(roomKey); updateHero();
+            save(); buildItemsNew(roomKey); updateHero();
             const btn = document.querySelector('#card-' + CSS.escape(sid) + ' .ep-save');
             if (btn) { btn.textContent = 'Enregistr\u00e9 &#10003;'; btn.style.background = '#2D5A30'; setTimeout(() => { btn.textContent = 'Enregistrer'; btn.style.background = ''; }, 1500); }
         }
 
-        // ===================== CHAT — persistance Supabase Realtime =====================
-        // Architecture : INSERT dans maison_chat → Postgres Realtime → tous les clients
-        // Broadcast séparé UNIQUEMENT pour "en train d'écrire" (pas besoin de persistance)
+        // ===================== CHAT =====================
         let chatName = localStorage.getItem('chat_name') || '';
         let _chatOpen = false;
-        let _chatReady = false;      // initChat appelé une seule fois
+        let _chatReady = false;
         let _chatUnread = 0;
-        let _typingChan = null;      // canal broadcast séparé pour le "typing"
-        let _seenIds = new Set();    // évite les doublons (message qu'on vient d'insérer)
+        let _typingChan = null;
+        let _seenIds = new Set();
 
-        // ---- UI helpers ----
         function _chatMsgsEl() { return document.getElementById('chatMessages'); }
         function _chatStatusEl() { return document.getElementById('chatOnlineStatus'); }
         function _chatBadgeEl() { return document.getElementById('chatBadge'); }
 
         function toggleChat() {
             _chatOpen = !_chatOpen;
-            document.getElementById('chatPanel').classList.toggle('on', _chatOpen);
+            const panel = document.getElementById('chatPanel');
+            if (!panel) return;
+            panel.classList.toggle('on', _chatOpen);
             const nb = document.getElementById('chatNameBar');
-            if (nb) nb.style.display = chatName ? 'none' : 'flex';
+            if (nb) nb.style.display = (!chatName && _chatOpen) ? 'flex' : 'none';
             if (_chatOpen) {
                 _chatUnread = 0;
                 const b = _chatBadgeEl();
                 if (b) { b.textContent = '0'; b.classList.remove('on'); }
                 setTimeout(() => {
-                    const m = _chatMsgsEl();
-                    if (m) m.scrollTop = m.scrollHeight;
+                    const m = _chatMsgsEl(); if (m) m.scrollTop = m.scrollHeight;
                     document.getElementById('chatInput')?.focus();
-                }, 380);
-                initChat();
+                }, 400);
+                if (supabaseClient) initChat();
+                else setTimeout(() => { if (supabaseClient) initChat(); else appendSystemMsg('Mode local uniquement.'); }, 1000);
             }
         }
 
         function saveChatName() {
             const v = (document.getElementById('chatNameInput')?.value || '').trim();
             if (!v) return;
-            chatName = v;
-            localStorage.setItem('chat_name', chatName);
-            const b = document.getElementById('chatNameBar');
-            if (b) b.style.display = 'none';
+            chatName = v; localStorage.setItem('chat_name', chatName);
+            const nb = document.getElementById('chatNameBar'); if (nb) nb.style.display = 'none';
             document.getElementById('chatInput')?.focus();
-            // met à jour le style "mine/theirs" pour les msgs déjà affichés
-            document.querySelectorAll('.chat-msg').forEach(el => {
-                const meta = el.querySelector('.chat-msg-meta');
-                if (meta && meta.dataset.sender === chatName) {
-                    el.classList.remove('theirs'); el.classList.add('mine');
-                }
-            });
         }
-
         function chatKeydown(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMessage(); } }
         function chatAutoResize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 100) + 'px'; }
 
-        // ---- Affichage d'un message ----
-        function appendChatMessage(msg, prepend = false) {
+        function appendChatMessage(msg) {
             const msgs = _chatMsgsEl(); if (!msgs) return;
-            if (msg.id && _seenIds.has(msg.id)) return;
-            if (msg.id) _seenIds.add(msg.id);
+            if (msg.id && _seenIds.has(String(msg.id))) return;
+            if (msg.id) _seenIds.add(String(msg.id));
             const isMine = msg.sender === chatName;
-            const ts = msg.created_at || msg.inserted_at || new Date().toISOString();
-            const time = new Date(ts).toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' });
+            const time = new Date(msg.created_at || Date.now()).toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' });
             const d = document.createElement('div');
             d.className = 'chat-msg ' + (isMine ? 'mine' : 'theirs');
-            d.innerHTML = `<div class="chat-bubble">${esc(msg.text)}</div>`
-                + `<div class="chat-msg-meta" data-sender="${esc(msg.sender)}">`
-                + `${isMine ? '' : esc(msg.sender) + ' · '}${time}</div>`;
-            if (prepend) msgs.insertBefore(d, msgs.firstChild);
-            else msgs.appendChild(d);
-            msgs.scrollTop = msgs.scrollHeight;
+            d.innerHTML = '<div class="chat-bubble">' + esc(msg.text) + '</div>'
+                + '<div class="chat-msg-meta" data-sender="' + esc(msg.sender) + '">'
+                + (isMine ? '' : esc(msg.sender) + ' \u00b7 ') + time + '</div>';
+            msgs.appendChild(d); msgs.scrollTop = msgs.scrollHeight;
         }
-
         function appendSystemMsg(text) {
             const msgs = _chatMsgsEl(); if (!msgs) return;
             const d = document.createElement('div');
@@ -3972,127 +3879,69 @@
             msgs.appendChild(d); msgs.scrollTop = msgs.scrollHeight;
         }
 
-        // ---- Typing indicator (broadcast seulement, pas besoin de persistance) ----
         let _thTimer = null;
         function broadcastTyping() {
             if (!_typingChan || !chatName) return;
-            _typingChan.send({ type: 'broadcast', event: 'typing', payload: { sender: chatName } });
+            try { _typingChan.send({ type: 'broadcast', event: 'typing', payload: { sender: chatName } }); } catch (e) { }
         }
         function showTyping(sender) {
             if (sender === chatName) return;
-            const el = document.getElementById('chatTyping');
-            if (el) el.classList.add('on');
+            const el = document.getElementById('chatTyping'); if (el) el.classList.add('on');
             clearTimeout(_thTimer);
-            _thTimer = setTimeout(() => {
-                const e = document.getElementById('chatTyping'); if (e) e.classList.remove('on');
-            }, 2400);
+            _thTimer = setTimeout(() => { const e = document.getElementById('chatTyping'); if (e) e.classList.remove('on'); }, 2400);
         }
 
-        // ---- Envoi d'un message — INSERT en DB, Realtime le diffuse ----
         async function sendChatMessage() {
             if (!chatName) {
-                const b = document.getElementById('chatNameBar');
-                if (b) { b.style.display = 'flex'; document.getElementById('chatNameInput')?.focus(); }
-                return;
-            }
-            if (!supabaseClient) {
-                appendSystemMsg('⚠️ Pas de connexion — message non envoyé.');
+                const nb = document.getElementById('chatNameBar');
+                if (nb) { nb.style.display = 'flex'; document.getElementById('chatNameInput')?.focus(); }
                 return;
             }
             const inp = document.getElementById('chatInput');
             const text = (inp?.value || '').trim(); if (!text) return;
             inp.value = ''; inp.style.height = 'auto';
-
-            // Affichage optimiste immédiat
             const tempId = 'tmp-' + Date.now();
-            const tempMsg = { id: tempId, sender: chatName, text, created_at: new Date().toISOString() };
-            appendChatMessage(tempMsg);
-
-            // INSERT → Realtime va le renvoyer à tout le monde (y compris soi-même via le listener)
-            // On utilise _seenIds pour ne pas l'afficher deux fois
-            const { data, error } = await supabaseClient
-                .from('maison_chat')
-                .insert({ sender: chatName, text })
-                .select()
-                .single();
-
-            if (error) {
-                appendSystemMsg('⚠️ Erreur envoi : ' + error.message);
-            } else if (data) {
-                // Enregistrer le vrai ID pour éviter le doublon quand Realtime le renvoie
-                _seenIds.add(data.id);
-            }
+            appendChatMessage({ id: tempId, sender: chatName, text, created_at: new Date().toISOString() });
+            if (!supabaseClient) { appendSystemMsg('\u26a0\ufe0f Pas de connexion.'); return; }
+            const { data, error } = await supabaseClient.from('maison_chat').insert({ sender: chatName, text }).select('id').single();
+            if (error) appendSystemMsg('\u26a0\ufe0f Erreur: ' + error.message);
+            else if (data) _seenIds.add(String(data.id));
         }
 
-        // ---- Initialisation — une seule fois ----
         async function initChat() {
             if (_chatReady) return;
             _chatReady = true;
             const sel = _chatStatusEl();
-            if (sel) sel.textContent = 'Connexion…';
-
-            if (!supabaseClient) {
-                if (sel) sel.textContent = 'Hors-ligne — sync désactivée';
-                appendSystemMsg('Mode local : les messages ne sont pas partagés entre appareils.');
-                return;
-            }
-
-            // 1. Charger l'historique (80 derniers messages)
-            const { data: history, error: histErr } = await supabaseClient
-                .from('maison_chat')
-                .select('id, sender, text, created_at')
-                .order('created_at', { ascending: true })
-                .limit(80);
-
-            if (histErr) {
-                appendSystemMsg('⚠️ Impossible de charger l'historique : ' + histErr.message);
-      } else if (history && history.length > 0) {
-                const msgs = _chatMsgsEl();
-                if (msgs) msgs.innerHTML = '<div class="chat-system">&#127969; Discussion familiale — ' + history.length + ' messages</div>';
-                history.forEach(m => appendChatMessage(m));
-            }
-
-            // 2. S'abonner aux nouveaux messages via Postgres Realtime (INSERT sur maison_chat)
-            //    C'est ça qui manquait : écouter la TABLE, pas juste le broadcast
-            supabaseClient
-                .channel('maison-chat-realtime')
-                .on(
-                    'postgres_changes',
-                    { event: 'INSERT', schema: 'public', table: 'maison_chat' },
-                    (payload) => {
+            if (sel) sel.textContent = 'Connexion\u2026';
+            if (!supabaseClient) { if (sel) sel.textContent = 'Hors-ligne'; return; }
+            try {
+                const { data: history } = await supabaseClient.from('maison_chat').select('id,sender,text,created_at').order('created_at', { ascending: true }).limit(80);
+                if (history && history.length > 0) {
+                    const msgs = _chatMsgsEl();
+                    if (msgs) msgs.innerHTML = '<div class="chat-system">&#127969; ' + history.length + ' messages</div>';
+                    history.forEach(m => appendChatMessage(m));
+                }
+            } catch (e) { }
+            try {
+                supabaseClient.channel('maison-chat-rt-v3')
+                    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'maison_chat' }, (payload) => {
                         const msg = payload.new;
-                        // N'affiche que si on ne l'a pas déjà (optimistic UI)
-                        if (!_seenIds.has(msg.id)) {
+                        if (!_seenIds.has(String(msg.id))) {
                             appendChatMessage(msg);
-                            if (!_chatOpen) {
-                                _chatUnread++;
-                                const b = _chatBadgeEl();
-                                if (b) { b.textContent = _chatUnread; b.classList.add('on'); }
-                            }
+                            if (!_chatOpen) { _chatUnread++; const b = _chatBadgeEl(); if (b) { b.textContent = _chatUnread; b.classList.add('on'); } }
                         }
-                    }
-                )
-                .subscribe(status => {
-                    if (sel) {
-                        if (status === 'SUBSCRIBED') sel.textContent = '● En ligne · Discussion active';
-                        else if (status === 'CHANNEL_ERROR') sel.textContent = '⚠️ Erreur connexion';
-                        else if (status === 'CLOSED') sel.textContent = '○ Déconnecté';
-                    }
-                });
-
-            // 3. Canal broadcast séparé pour "en train d'écrire" uniquement
-            _typingChan = supabaseClient
-                .channel('maison-chat-typing')
-                .on('broadcast', { event: 'typing' }, ({ payload }) => showTyping(payload.sender))
-                .subscribe();
-
-            if (sel) sel.textContent = '● En ligne · Discussion active';
+                    })
+                    .subscribe(s => { if (sel) { if (s === 'SUBSCRIBED') sel.textContent = '\u25cf En ligne'; else if (s === 'CHANNEL_ERROR') sel.textContent = '\u26a0\ufe0f Erreur'; } });
+            } catch (e) { }
+            try {
+                _typingChan = supabaseClient.channel('maison-typing-v3')
+                    .on('broadcast', { event: 'typing' }, ({ payload }) => showTyping(payload.sender))
+                    .subscribe();
+            } catch (e) { }
+            if (sel) sel.textContent = '\u25cf En ligne';
         }
 
-        // Lancer initChat dès le chargement pour recevoir les notifs même chat fermé
-        window.addEventListener('load', () => {
-            if (supabaseClient) setTimeout(initChat, 1200);
-        });
+        window.addEventListener('load', () => setTimeout(() => { if (supabaseClient) initChat(); }, 2500));
     </script>
 
     <!-- LIGHTBOX -->
@@ -4117,7 +3966,7 @@
             <button class="chat-name-save" onclick="saveChatName()">OK</button>
         </div>
         <div class="chat-messages" id="chatMessages">
-            <div class="chat-system">Bienvenue dans la discussion familiale &#127969;</div>
+            <div class="chat-system">&#127969; Bienvenue dans la discussion familiale</div>
         </div>
         <div class="chat-typing" id="chatTyping">
             <div style="background:var(--bl);border:1px solid rgba(200,191,180,.3);border-radius:18px;padding:10px 14px;display:flex;gap:4px;align-items:center">
@@ -4131,7 +3980,7 @@
     </div>
 
     <!-- CHAT FAB -->
-    <button class="chat-fab" onclick="toggleChat()" title="Discussion familiale">
+    <button class="chat-fab" onclick="toggleChat()" title="Discussion familiale" style="bottom:80px">
         &#128172;
         <span class="chat-badge" id="chatBadge">0</span>
     </button>
