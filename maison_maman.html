@@ -214,6 +214,11 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;background:li
 .reveal.in-view{opacity:1;transform:none}
 .fab-tour{position:fixed;right:18px;bottom:18px;z-index:450;border:none;border-radius:999px;background:linear-gradient(135deg,var(--ol),var(--br));color:var(--ad);padding:13px 16px;font:600 11px 'Jost',sans-serif;letter-spacing:1.2px;text-transform:uppercase;box-shadow:0 18px 42px rgba(44,40,37,.28);cursor:pointer;display:flex;align-items:center;gap:8px}
 .fab-tour span{font-size:17px;line-height:1}
+.sync-status{position:fixed;left:18px;bottom:18px;z-index:445;border:1px solid rgba(184,148,63,.25);border-radius:999px;background:rgba(44,40,37,.92);color:var(--pl);box-shadow:0 12px 34px rgba(44,40,37,.2);font-size:10px;font-weight:500;letter-spacing:1px;text-transform:uppercase;padding:10px 13px;display:flex;align-items:center;gap:8px}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:#9CA3AF}
+.sync-status.connected .sync-dot{background:#16A34A}
+.sync-status.pending .sync-dot{background:#D97706}
+.sync-status.error .sync-dot{background:#DC2626}
 .tour-layer{position:fixed;inset:0;z-index:500;display:none;pointer-events:none;background:rgba(19,17,15,.18);backdrop-filter:blur(1px)}
 .tour-layer.on{display:block}
 .tour-card{position:fixed;z-index:540;left:50%;bottom:18px;transform:translateX(-50%);width:min(420px,calc(100vw - 28px));background:rgba(253,250,246,.96);border:1px solid rgba(196,149,106,.34);border-radius:14px;padding:16px;box-shadow:0 24px 70px rgba(0,0,0,.28);pointer-events:auto}
@@ -285,6 +290,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;background:li
 
 
 <button class="fab-tour" type="button" onclick="startTour()"><span>?</span> Visite guidée</button>
+<div class="sync-status" id="syncStatus"><span class="sync-dot"></span><span id="syncStatusText">Mode local</span></div>
 <div class="tour-layer" id="tourLayer">
   <div class="tour-card" role="dialog" aria-modal="true" aria-live="polite">
     <div class="tour-kicker" id="tourKicker">Étape 1</div>
@@ -617,6 +623,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;background:li
   <div class="safe"></div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 // ===================== DATA =====================
 const STORES = ['Tanguay','Léon','IKEA','Marketplace (Facebook)','Costco','Walmart','Hart','Winners / HomeSense','Wayfair','Amazon','AliExpress','Econoplus','Shein Home','Dollarama','Autre'];
@@ -773,28 +780,161 @@ const ROOMS = {
   }
 };
 
-// ===================== STATE =====================
-let state = JSON.parse(localStorage.getItem('maison_state') || '{}');
-let customItems = JSON.parse(localStorage.getItem('maison_custom_items') || '{}');
-let participants = JSON.parse(localStorage.getItem('maison_participants') || '[]');
-let contributions = JSON.parse(localStorage.getItem('maison_contributions') || '[]');
+// ===================== SHARED STATE =====================
+// Remplir ces 2 valeurs après avoir créé le projet Supabase.
+// Voir DEPLOIEMENT.md pour les étapes complètes.
+const SUPABASE_URL = 'https://gsqoqutynnqjirqqqkaz.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdzcW9xdXR5bm5xamlycXFxa2F6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NTY3MzksImV4cCI6MjA5NTAzMjczOX0.3srpgOTzENLSumOYf9WpKYANrocyOvJoxNykUwMshT0';
+const SUPABASE_ROW_ID = 'maison-famille';
+const SUPABASE_TABLE = 'maison_app_state';
 
-Object.entries(customItems).forEach(([roomKey,items])=>{
-  if(ROOMS[roomKey] && Array.isArray(items)){
-    items.forEach(item=>ROOMS[roomKey].items.push(item));
-  }
-});
+let state = readJSON('maison_state', {});
+let customItems = readJSON('maison_custom_items', {});
+let participants = readJSON('maison_participants', []);
+let contributions = readJSON('maison_contributions', []);
+let supabaseClient = null;
+let remoteSaveTimer = null;
+let applyingRemoteState = false;
 
-// init missing
-Object.entries(ROOMS).forEach(([rk,room])=>{
-  room.items.forEach(item=>{
-    if(!state[item.id]) state[item.id]={price:item.price,store:item.store,status:item.status,payer:''};
+function readJSON(key, fallback){
+  try{return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback));}
+  catch(e){return fallback;}
+}
+
+function applyCustomItemsToRooms(){
+  Object.values(ROOMS).forEach(room=>{
+    room.items = room.items.filter(item=>!item.custom);
   });
-});
-function save(){localStorage.setItem('maison_state',JSON.stringify(state));}
-function saveCustomItems(){localStorage.setItem('maison_custom_items',JSON.stringify(customItems));}
-function saveParticipants(){localStorage.setItem('maison_participants',JSON.stringify(participants));}
-function saveContributions(){localStorage.setItem('maison_contributions',JSON.stringify(contributions));}
+  Object.entries(customItems).forEach(([roomKey,items])=>{
+    if(ROOMS[roomKey] && Array.isArray(items)){
+      items.forEach(item=>ROOMS[roomKey].items.push(item));
+    }
+  });
+}
+
+function ensureStateDefaults(){
+  Object.entries(ROOMS).forEach(([rk,room])=>{
+    room.items.forEach(item=>{
+      if(!state[item.id]) state[item.id]={price:item.price,store:item.store,status:item.status,payer:''};
+    });
+  });
+}
+
+function saveLocalState(){
+  localStorage.setItem('maison_state',JSON.stringify(state));
+  localStorage.setItem('maison_custom_items',JSON.stringify(customItems));
+  localStorage.setItem('maison_participants',JSON.stringify(participants));
+  localStorage.setItem('maison_contributions',JSON.stringify(contributions));
+}
+
+function getSharedPayload(){
+  return {
+    id: SUPABASE_ROW_ID,
+    state,
+    custom_items: customItems,
+    participants,
+    contributions,
+    updated_at: new Date().toISOString()
+  };
+}
+
+function saveSharedState(){
+  if(applyingRemoteState) return;
+  saveLocalState();
+  queueRemoteSave();
+}
+
+function save(){saveSharedState();}
+function saveCustomItems(){saveSharedState();}
+function saveParticipants(){saveSharedState();}
+function saveContributions(){saveSharedState();}
+
+function hasSupabaseConfig(){
+  return SUPABASE_URL.startsWith('https://') && SUPABASE_ANON_KEY.length > 20 && window.supabase;
+}
+
+function setSyncStatus(mode,text){
+  const badge=document.getElementById('syncStatus');
+  const label=document.getElementById('syncStatusText');
+  if(!badge || !label) return;
+  badge.className='sync-status '+(mode||'');
+  label.textContent=text;
+}
+
+function queueRemoteSave(){
+  if(!supabaseClient) return;
+  clearTimeout(remoteSaveTimer);
+  setSyncStatus('pending','Synchronisation...');
+  remoteSaveTimer = setTimeout(async()=>{
+    const {error} = await supabaseClient.from(SUPABASE_TABLE).upsert(getSharedPayload());
+    if(error){
+      console.warn('Synchronisation Supabase impossible:', error.message);
+      setSyncStatus('error','Erreur sync');
+    }else{
+      setSyncStatus('connected','Synchronisé');
+    }
+  },350);
+}
+
+function applySharedRow(row){
+  if(!row) return;
+  applyingRemoteState = true;
+  state = row.state || {};
+  customItems = row.custom_items || {};
+  participants = row.participants || [];
+  contributions = row.contributions || [];
+  applyCustomItemsToRooms();
+  ensureStateDefaults();
+  saveLocalState();
+  applyingRemoteState = false;
+}
+
+function refreshSharedViews(){
+  updateHero();
+  refreshVisibleRoom();
+  if(document.getElementById('sec-budget')?.classList.contains('on')) buildBudgetOverview();
+  if(document.getElementById('sec-collab')?.classList.contains('on')) buildCollab();
+}
+
+async function initSharedDatabase(){
+  applyCustomItemsToRooms();
+  ensureStateDefaults();
+  saveLocalState();
+  if(!hasSupabaseConfig()){
+    setSyncStatus('', 'Mode local');
+    return;
+  }
+
+  setSyncStatus('pending','Connexion...');
+  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const {data,error} = await supabaseClient
+    .from(SUPABASE_TABLE)
+    .select('state,custom_items,participants,contributions,updated_at')
+    .eq('id', SUPABASE_ROW_ID)
+    .maybeSingle();
+
+  if(error){
+    console.warn('Chargement Supabase impossible:', error.message);
+    setSyncStatus('error','Erreur sync');
+    return;
+  }
+
+  if(data){
+    applySharedRow(data);
+    refreshSharedViews();
+  }else{
+    queueRemoteSave();
+  }
+  setSyncStatus('connected','Synchronisé');
+
+  supabaseClient
+    .channel('maison-sync')
+    .on('postgres_changes',{event:'*',schema:'public',table:SUPABASE_TABLE,filter:`id=eq.${SUPABASE_ROW_ID}`},payload=>{
+      applySharedRow(payload.new);
+      refreshSharedViews();
+    })
+    .subscribe();
+}
 
 // ===================== CURRENT PHASES =====================
 let currentPhase = {};
@@ -1374,7 +1514,7 @@ function goSec(id,idx){
 }
 
 // ===================== INIT =====================
-updateHero();
+initSharedDatabase().finally(()=>updateHero());
 </script>
 </body>
 </html>
