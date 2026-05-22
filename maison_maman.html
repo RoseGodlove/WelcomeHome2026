@@ -7,10 +7,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --cr:#F5F0E8;--be:#E8DFD0;--br:#C4956A;--brd:#8B5E3C;
-  --pi:#9B8E7E;--pl:#C8BFB4;--ar:#4A4540;--ad:#2C2825;
-  --bl:#FDFAF6;--or:#B8943F;--ol:#D4AF6A;
-  --ve:#5C7A5E;--vl:#8AA88C;--fo:#F0EBE2;
+  --cr:#F3ECE0;--be:#D8D1C6;--br:#BF8B62;--brd:#725035;
+  --pi:#7E8179;--pl:#C8CBBF;--ar:#3F4640;--ad:#202522;
+  --bl:#FFFDF8;--or:#A47731;--ol:#D8AD62;
+  --ve:#496E57;--vl:#86A77A;--fo:#ECEDE6;
+  --cl:#A6533D;--sl:#314C5A;--ro:#B76C7B;
   --r:12px;--rs:8px;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -75,6 +76,8 @@ body{font-family:'Jost',sans-serif;background:var(--fo);color:var(--ad);overflow
 .item:active{transform:scale(.985)}
 .item-head{display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer}
 .item-img{width:52px;height:52px;border-radius:10px;object-fit:cover;flex-shrink:0;background:var(--be)}
+.img-fallback{display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--ve),var(--sl) 52%,var(--cl));color:#fff;font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:500;text-transform:uppercase}
+.rc-img.img-fallback,.item-img.img-fallback{object-fit:initial}
 .item-info{flex:1;min-width:0}
 .item-name{font-size:13px;font-weight:500;color:var(--ad);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .item-store-row{display:flex;align-items:center;gap:5px}
@@ -138,7 +141,9 @@ body{font-family:'Jost',sans-serif;background:var(--fo);color:var(--ad);overflow
 
 /* RESUME PAGE */
 .res-grid{padding:14px;display:flex;flex-direction:column;gap:10px}
-.rc{background:var(--bl);border-radius:var(--r);overflow:hidden;border:1px solid rgba(200,191,180,0.25);box-shadow:0 2px 10px rgba(44,40,37,0.04);cursor:pointer;transition:transform .15s;display:flex;height:88px}
+.rc{background:var(--bl);border-radius:var(--r);overflow:hidden;border:1px solid rgba(200,191,180,0.25);box-shadow:0 2px 10px rgba(44,40,37,0.04);cursor:pointer;transition:transform .15s;display:flex;height:88px;position:relative}
+.rc::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,var(--ol),var(--ve),var(--cl));opacity:.9}
+.rc::after{content:'';position:absolute;inset:0;background:linear-gradient(105deg,transparent 55%,rgba(73,110,87,.08));pointer-events:none}
 .rc:active{transform:scale(.985)}
 .rc-img{width:88px;height:88px;object-fit:cover;flex-shrink:0}
 .rc-body{flex:1;padding:12px 14px;min-width:0;display:flex;flex-direction:column;justify-content:center}
@@ -171,10 +176,12 @@ body{font-family:'Jost',sans-serif;background:var(--fo);color:var(--ad);overflow
 /* PREMIUM EXPERIENCE */
 body{
   background:
-    linear-gradient(135deg,rgba(245,240,232,.94),rgba(232,223,208,.78) 42%,rgba(240,235,226,.96)),
-    repeating-linear-gradient(90deg,rgba(44,40,37,.025) 0,rgba(44,40,37,.025) 1px,transparent 1px,transparent 32px);
+    radial-gradient(circle at 18% 12%,rgba(183,108,123,.14),transparent 30%),
+    radial-gradient(circle at 90% 10%,rgba(49,76,90,.16),transparent 28%),
+    linear-gradient(135deg,rgba(236,237,230,.96),rgba(221,229,221,.84) 42%,rgba(239,234,224,.96)),
+    repeating-linear-gradient(90deg,rgba(32,37,34,.025) 0,rgba(32,37,34,.025) 1px,transparent 1px,transparent 32px);
 }
-body::before{content:'';position:fixed;inset:0;pointer-events:none;background:linear-gradient(120deg,rgba(184,148,63,.08),transparent 24%,rgba(92,122,94,.08) 58%,transparent);z-index:-1}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;background:linear-gradient(120deg,rgba(164,119,49,.08),transparent 24%,rgba(73,110,87,.1) 58%,transparent);z-index:-1}
 .hero-img{transform:scale(1.06);animation:heroDrift 18s ease-in-out infinite alternate;filter:saturate(1.12) contrast(1.05)}
 .hero-overlay{background:linear-gradient(to bottom,rgba(16,20,18,.18) 0%,rgba(44,32,25,.55) 52%,rgba(28,24,22,.96) 100%)}
 .hero-body{animation:heroRise .9s ease-out both}
@@ -189,7 +196,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;background:li
 .nav-btn{position:relative;overflow:hidden}
 .nav-btn::after{content:'';position:absolute;left:16px;right:16px;bottom:6px;height:1px;background:linear-gradient(90deg,transparent,var(--ol),transparent);opacity:0;transform:scaleX(.4);transition:.25s}
 .nav-btn.on::after,.nav-btn:hover::after{opacity:1;transform:scaleX(1)}
-.promo{background:linear-gradient(90deg,#284E35,#77622D,#8B5E3C);box-shadow:0 8px 24px rgba(44,40,37,.12)}
+.promo{background:linear-gradient(90deg,#244837,#314C5A,#8A4B3B);box-shadow:0 8px 24px rgba(44,40,37,.12)}
 .sh{min-height:196px;display:flex;align-items:flex-end;border-bottom:1px solid rgba(184,148,63,.12)}
 .sh-cover{opacity:.28;transform:scale(1.04);filter:saturate(1.08)}
 .sh-overlay{background:linear-gradient(120deg,rgba(35,29,25,.88),rgba(35,29,25,.68) 45%,rgba(35,29,25,.95))}
@@ -198,7 +205,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;background:li
 .sh-tot:hover{transform:translateY(-2px);border-color:rgba(212,175,106,.34)}
 .phase-nav{position:sticky;top:42px;z-index:150;background:rgba(232,223,208,.9);backdrop-filter:blur(14px)}
 .items,.res-grid,.bov{max-width:1180px;margin:0 auto;width:100%}
-.item,.rc,.bov-card,.add-box,.tot-card{box-shadow:0 18px 45px rgba(44,40,37,.08);transition:transform .24s ease,box-shadow .24s ease,border-color .24s ease}
+.item,.rc,.bov-card,.add-box,.tot-card{box-shadow:0 18px 45px rgba(32,37,34,.09);transition:transform .24s ease,box-shadow .24s ease,border-color .24s ease}
 .item:hover,.rc:hover,.bov-card:hover,.add-box:hover{transform:translateY(-3px);box-shadow:0 24px 58px rgba(44,40,37,.14);border-color:rgba(196,149,106,.32)}
 .item{animation:itemPop .42s ease both}
 .item-img,.rc-img{box-shadow:0 8px 18px rgba(44,40,37,.12)}
@@ -208,7 +215,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;background:li
 .ep-input:focus,.ep-select:focus{box-shadow:0 0 0 3px rgba(196,149,106,.14)}
 .ep-save{background:linear-gradient(135deg,var(--ad),#4A3428);box-shadow:0 10px 22px rgba(44,40,37,.15)}
 .ep-save:hover{background:linear-gradient(135deg,#3C342F,#6E4A32)}
-.tot-card{background:linear-gradient(135deg,#292420,#3F3329 55%,#273C2D);box-shadow:0 28px 70px rgba(44,40,37,.18)}
+.tot-card{background:linear-gradient(135deg,#202522,#314C5A 48%,#496E57);box-shadow:0 28px 70px rgba(32,37,34,.18)}
 .tot-card::before{content:'';position:absolute;inset:0;background:linear-gradient(110deg,transparent,rgba(255,255,255,.08),transparent);transform:translateX(-100%);animation:sheen 7s ease-in-out infinite}
 .reveal{opacity:0;transform:translateY(18px);transition:opacity .55s ease,transform .55s ease}
 .reveal.in-view{opacity:1;transform:none}
@@ -240,6 +247,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;background:li
 @keyframes focusGlow{from{filter:brightness(1)}to{filter:brightness(1.08)}}
 @keyframes confettiFly{to{transform:translate(var(--x),var(--y)) rotate(220deg);opacity:0}}
 @media (min-width:760px){.res-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.rc{height:112px}.rc-img{width:112px;height:112px}.items{padding:22px}.item-head{padding:15px 18px}.item-img{width:64px;height:64px}.hero-stats{gap:54px}.hs-n{font-size:34px}}
+@media (min-width:1120px){.res-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.rc{height:132px}.rc-img{width:132px;height:132px}.rc-name{font-size:16px}.rc-style{white-space:normal;line-height:1.35}.items{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.items .add-box{grid-column:1/-1}.item{margin-bottom:0}.bov{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.bov-card{margin-bottom:0}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 
 /* FAMILY COLLAB */
@@ -267,7 +275,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;background:li
   <div class="hero-body">
     <div class="hero-badge">Plan d'aménagement · 2026</div>
     <div class="hero-title">Bienvenue<br><em>à la Maison</em></div>
-    <div class="hero-sub">6 personnes · 3 niveaux · 9 pièces</div>
+    <div class="hero-sub">6 personnes · 3 niveaux · 12 espaces à aménager</div>
     <div class="hero-line"></div>
     <div class="hero-stats">
       <div class="hs"><div class="hs-n" id="heroTotal">6 548$</div><div class="hs-l">Budget total</div></div>
@@ -314,10 +322,13 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;background:li
   <button class="nav-btn" onclick="goSec('manger',5)">Salle à manger</button>
   <button class="nav-btn" onclick="goSec('sdb',6)">Salle de bain</button>
   <button class="nav-btn" onclick="goSec('garcons',7)">Ch. garçons</button>
-  <button class="nav-btn" onclick="goSec('filles',8)">Ch. filles</button>
-  <button class="nav-btn" onclick="goSec('maman',9)">Ch. maman</button>
-  <button class="nav-btn" onclick="goSec('soussol',10)">Sous-sol + sport</button>
-  <button class="nav-btn" onclick="goSec('buanderie',11)">Buanderie</button>
+  <button class="nav-btn" onclick="goSec('rose',8)">Ch. Rose</button>
+  <button class="nav-btn" onclick="goSec('ruth',9)">Ch. Ruth</button>
+  <button class="nav-btn" onclick="goSec('maman',10)">Ch. maman</button>
+  <button class="nav-btn" onclick="goSec('soussol',11)">Sous-sol + sport</button>
+  <button class="nav-btn" onclick="goSec('buanderie',12)">Buanderie</button>
+  <button class="nav-btn" onclick="goSec('garage',13)">Garage</button>
+  <button class="nav-btn" onclick="goSec('hangar',14)">Hangar</button>
 </div>
 
 <!-- =================== VUE D'ENSEMBLE =================== -->
@@ -388,16 +399,26 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;background:li
       <div class="rc-amt"><div class="rc-price" id="rv-garcons">475$</div><div class="rc-price-sub">minimum</div></div>
     </div>
 
-        <div class="rc" onclick="goSec('filles',8)">
-      <img class="rc-img" src="https://images.unsplash.com/photo-1617325247661-675ab4b64b94?w=200&q=70" alt="Chambre filles">
+    <div class="rc" onclick="goSec('rose',8)">
+      <img class="rc-img" src="https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=200&q=70" alt="Chambre Rose">
       <div class="rc-body">
-        <div class="rc-name">Chambre des 2 filles</div>
-        <div class="rc-style">Collaborative · Créative · À personnaliser</div>
+        <div class="rc-name">Chambre Rose</div>
+        <div class="rc-style">Doux · Créatif · Espace personnel</div>
         <div class="rc-pills"><span class="rc-pill rc-j1">Jour 1</span><span class="rc-pill rc-p2">Phase 2</span><span class="rc-pill rc-p3">Envies</span></div>
       </div>
-      <div class="rc-amt"><div class="rc-price" id="rv-filles">740$</div><div class="rc-price-sub">minimum</div></div>
+      <div class="rc-amt"><div class="rc-price" id="rv-rose">370$</div><div class="rc-price-sub">minimum</div></div>
     </div>
-<div class="rc" onclick="goSec('maman',9)">
+
+    <div class="rc" onclick="goSec('ruth',9)">
+      <img class="rc-img" src="https://images.unsplash.com/photo-1617103996702-96ff29b1c467?w=200&q=70" alt="Chambre Ruth">
+      <div class="rc-body">
+        <div class="rc-name">Chambre Ruth</div>
+        <div class="rc-style">Calme · Lecture · À personnaliser</div>
+        <div class="rc-pills"><span class="rc-pill rc-j1">Jour 1</span><span class="rc-pill rc-p2">Phase 2</span><span class="rc-pill rc-p3">Envies</span></div>
+      </div>
+      <div class="rc-amt"><div class="rc-price" id="rv-ruth">370$</div><div class="rc-price-sub">minimum</div></div>
+    </div>
+<div class="rc" onclick="goSec('maman',10)">
       <img class="rc-img" src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=200&q=70" alt="Chambre maman">
       <div class="rc-body">
         <div class="rc-name">Chambre maman</div>
@@ -407,7 +428,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;background:li
       <div class="rc-amt"><div class="rc-price" id="rv-maman">1 150$</div><div class="rc-price-sub">minimum</div></div>
     </div>
 
-    <div class="rc" onclick="goSec('soussol',10)">
+    <div class="rc" onclick="goSec('soussol',11)">
       <img class="rc-img" src="https://images.unsplash.com/photo-1540497077202-7c8a3999166f?w=200&q=70" alt="Sous-sol sport">
       <div class="rc-body">
         <div class="rc-name">Sous-sol + Sport</div>
@@ -417,7 +438,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;background:li
       <div class="rc-amt"><div class="rc-price" id="rv-soussol">685$</div><div class="rc-price-sub">minimum</div></div>
     </div>
 
-    <div class="rc" onclick="goSec('buanderie',11)">
+    <div class="rc" onclick="goSec('buanderie',12)">
       <img class="rc-img" src="https://images.unsplash.com/photo-1604335399105-a0c585fd81a1?w=200&q=70" alt="Buanderie">
       <div class="rc-body">
         <div class="rc-name">SDB sous-sol + Buanderie</div>
@@ -426,12 +447,32 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;background:li
       </div>
       <div class="rc-amt"><div class="rc-price" id="rv-buanderie">561$</div><div class="rc-price-sub">minimum</div></div>
     </div>
+
+    <div class="rc" onclick="goSec('garage',13)">
+      <img class="rc-img" src="https://images.unsplash.com/photo-1625602812206-5ec545ca1231?w=200&q=70" alt="Garage">
+      <div class="rc-body">
+        <div class="rc-name">Garage</div>
+        <div class="rc-style">Rangement · Outils · Entrée pratique</div>
+        <div class="rc-pills"><span class="rc-pill rc-j1">Jour 1</span><span class="rc-pill rc-p2">Phase 2</span></div>
+      </div>
+      <div class="rc-amt"><div class="rc-price" id="rv-garage">315$</div><div class="rc-price-sub">minimum</div></div>
+    </div>
+
+    <div class="rc" onclick="goSec('hangar',14)">
+      <img class="rc-img" src="https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=200&q=70" alt="Hangar">
+      <div class="rc-body">
+        <div class="rc-name">Hangar</div>
+        <div class="rc-style">Extérieur · Saisonnier · Jardin</div>
+        <div class="rc-pills"><span class="rc-pill rc-j1">Jour 1</span><span class="rc-pill rc-p2">Phase 2</span></div>
+      </div>
+      <div class="rc-amt"><div class="rc-price" id="rv-hangar">265$</div><div class="rc-price-sub">minimum</div></div>
+    </div>
   </div>
 
   <div class="tot-card">
     <div class="tot-lbl">Budget total estimé</div>
     <div class="tot-val" id="grandTotal">~6 548$</div>
-    <div class="tot-sub">Jour 1 minimum · Cible réaliste 6 500$ — 7 500$</div>
+    <div class="tot-sub">Jour 1 minimum · Cible réaliste à ajuster selon les achats réels</div>
     <div class="tot-div"></div>
     <div class="tot-grid">
       <div class="tg-i"><div class="tg-l">Acheté</div><div class="tg-v" id="gtDone">0$</div></div>
@@ -556,20 +597,37 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;background:li
   <div class="safe"></div>
 </div>
 
-<!-- =================== FILLES =================== -->
-<div class="sec" id="sec-filles">
+<!-- =================== ROSE =================== -->
+<div class="sec" id="sec-rose">
   <div class="sh">
-    <div class="sh-cover" style="background-image:url('https://images.unsplash.com/photo-1617325247661-675ab4b64b94?w=600&q=70')"></div>
+    <div class="sh-cover" style="background-image:url('https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=600&q=70')"></div>
     <div class="sh-overlay"></div>
     <div class="sh-inner">
-      <div class="sh-tag">À imaginer avec elles</div>
-      <div class="sh-title">Chambre des <em>2 filles</em></div>
-      <div class="sh-sub">Elles peuvent ajouter leurs idées, leurs envies et leurs priorités</div>
-      <div class="sh-totals" id="totals-filles"></div>
+      <div class="sh-tag">Espace personnel</div>
+      <div class="sh-title">Chambre <em>Rose</em></div>
+      <div class="sh-sub">Doux · Créatif · Un coin rien qu'à elle</div>
+      <div class="sh-totals" id="totals-rose"></div>
     </div>
   </div>
-  <div id="phase-nav-filles" class="phase-nav"></div>
-  <div class="items" id="items-filles"></div>
+  <div id="phase-nav-rose" class="phase-nav"></div>
+  <div class="items" id="items-rose"></div>
+  <div class="safe"></div>
+</div>
+
+<!-- =================== RUTH =================== -->
+<div class="sec" id="sec-ruth">
+  <div class="sh">
+    <div class="sh-cover" style="background-image:url('https://images.unsplash.com/photo-1617103996702-96ff29b1c467?w=600&q=70')"></div>
+    <div class="sh-overlay"></div>
+    <div class="sh-inner">
+      <div class="sh-tag">Espace personnel</div>
+      <div class="sh-title">Chambre <em>Ruth</em></div>
+      <div class="sh-sub">Calme · Lecture · Rangement facile au quotidien</div>
+      <div class="sh-totals" id="totals-ruth"></div>
+    </div>
+  </div>
+  <div id="phase-nav-ruth" class="phase-nav"></div>
+  <div class="items" id="items-ruth"></div>
   <div class="safe"></div>
 </div>
 <!-- =================== MAMAN =================== -->
@@ -620,6 +678,40 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;background:li
   </div>
   <div id="phase-nav-buanderie" class="phase-nav"></div>
   <div class="items" id="items-buanderie"></div>
+  <div class="safe"></div>
+</div>
+
+<!-- =================== GARAGE =================== -->
+<div class="sec" id="sec-garage">
+  <div class="sh">
+    <div class="sh-cover" style="background-image:url('https://images.unsplash.com/photo-1625602812206-5ec545ca1231?w=600&q=70')"></div>
+    <div class="sh-overlay"></div>
+    <div class="sh-inner">
+      <div class="sh-tag">Zone pratique</div>
+      <div class="sh-title"><em>Garage</em></div>
+      <div class="sh-sub">Rangement · Outils · Circulation claire</div>
+      <div class="sh-totals" id="totals-garage"></div>
+    </div>
+  </div>
+  <div id="phase-nav-garage" class="phase-nav"></div>
+  <div class="items" id="items-garage"></div>
+  <div class="safe"></div>
+</div>
+
+<!-- =================== HANGAR =================== -->
+<div class="sec" id="sec-hangar">
+  <div class="sh">
+    <div class="sh-cover" style="background-image:url('https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=600&q=70')"></div>
+    <div class="sh-overlay"></div>
+    <div class="sh-inner">
+      <div class="sh-tag">Extérieur</div>
+      <div class="sh-title"><em>Hangar</em></div>
+      <div class="sh-sub">Saisonnier · Jardin · Bacs de rangement</div>
+      <div class="sh-totals" id="totals-hangar"></div>
+    </div>
+  </div>
+  <div id="phase-nav-hangar" class="phase-nav"></div>
+  <div class="items" id="items-hangar"></div>
   <div class="safe"></div>
 </div>
 
@@ -713,19 +805,33 @@ const ROOMS = {
       {id:'ga12',name:'Lampe de bureau x2',phase:'p2',store:'Hart',price:25,status:'pending',tip:'Hart a de bonnes lampes de bureau articulées à moins de 15$ chacune.',img:'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=80&q=60'},
     ]
   },
-  filles:{
-    name:'Chambre des 2 filles',img:'https://images.unsplash.com/photo-1617325247661-675ab4b64b94?w=80&q=70',
+  rose:{
+    name:'Chambre Rose',img:'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=80&q=70',
     items:[
-      {id:'fi1',name:'2 cadres de lit simple / superposé',phase:'j1',store:'Marketplace (Facebook)',price:180,status:'pending',tip:'Laisser les filles choisir entre deux lits séparés ou un lit superposé selon l’espace.',img:'https://images.unsplash.com/photo-1617325247661-675ab4b64b94?w=80&q=60'},
-      {id:'fi2',name:'2 matelas simples neufs',phase:'j1',store:'Econoplus',price:260,status:'pending',tip:'Matelas neufs seulement. Econoplus ou Léon selon promotion.',img:'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=80&q=60'},
-      {id:'fi3',name:'Literie x2 au choix des filles',phase:'j1',store:'Walmart',price:90,status:'pending',tip:'Prévoir un petit budget où chacune choisit ses couleurs.',img:'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=80&q=60'},
-      {id:'fi4',name:'Bureau créatif partagé',phase:'j1',store:'IKEA',price:120,status:'pending',tip:'Un grand bureau ou deux petits postes selon les devoirs et les loisirs.',img:'https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=80&q=60'},
-      {id:'fi5',name:'Rangement vêtements et jouets',phase:'j1',store:'IKEA',price:90,status:'pending',tip:'KALLAX, paniers et boîtes étiquetées pour que chacune ait son espace.',img:'https://images.unsplash.com/photo-1558997519-83ea9252edf8?w=80&q=60'},
-      {id:'fi6',name:'Lampes de chevet x2',phase:'p2',store:'Hart',price:40,status:'pending',tip:'Lampes douces pour lecture et ambiance.',img:'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=80&q=60'},
-      {id:'fi7',name:'Tapis doux grand format',phase:'p2',store:'Winners / HomeSense',price:75,status:'pending',tip:'Un tapis rend la chambre plus chaleureuse et délimite l’espace de jeu.',img:'https://images.unsplash.com/photo-1584467735815-f778f274e296?w=80&q=60'},
-      {id:'fi8',name:'Mur déco / cadres / affiches',phase:'p3',store:'Dollarama',price:35,status:'pending',tip:'Elles peuvent choisir les affiches et les photos à accrocher.',img:'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=80&q=60'},
+      {id:'ro1',name:'Cadre de lit simple',phase:'j1',store:'Marketplace (Facebook)',price:90,status:'pending',tip:'Lit simple séparé pour que Rose ait son propre espace. Marketplace est idéal pour le cadre.',img:'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=80&q=60'},
+      {id:'ro2',name:'Matelas simple neuf',phase:'j1',store:'Econoplus',price:130,status:'pending',tip:'Matelas neuf seulement. Vérifier Econoplus et Léon selon les promotions.',img:'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=80&q=60'},
+      {id:'ro3',name:'Literie choisie par Rose',phase:'j1',store:'Walmart',price:45,status:'pending',tip:'Prévoir un choix de couleurs ou de thème pour qu’elle s’approprie la pièce.',img:'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=80&q=60'},
+      {id:'ro4',name:'Bureau créatif compact',phase:'j1',store:'IKEA',price:70,status:'pending',tip:'Un poste à elle pour dessins, devoirs et petites collections.',img:'https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=80&q=60'},
+      {id:'ro5',name:'Rangement vêtements + jouets',phase:'j1',store:'IKEA',price:65,status:'pending',tip:'KALLAX, paniers et boîtes étiquetées pour garder la chambre facile à ranger.',img:'https://images.unsplash.com/photo-1558997519-83ea9252edf8?w=80&q=60'},
+      {id:'ro6',name:'Lampe de chevet douce',phase:'p2',store:'Hart',price:20,status:'pending',tip:'Lumière chaude pour lecture et routine du soir.',img:'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=80&q=60'},
+      {id:'ro7',name:'Tapis doux',phase:'p2',store:'Winners / HomeSense',price:38,status:'pending',tip:'Un tapis rend la pièce plus chaleureuse sans gros travaux.',img:'https://images.unsplash.com/photo-1584467735815-f778f274e296?w=80&q=60'},
+      {id:'ro8',name:'Mur déco Rose',phase:'p3',store:'Dollarama',price:18,status:'pending',tip:'Cadres, affiches ou petites tablettes selon ses goûts.',img:'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=80&q=60'},
     ]
-  },  maman:{
+  },
+  ruth:{
+    name:'Chambre Ruth',img:'https://images.unsplash.com/photo-1617103996702-96ff29b1c467?w=80&q=70',
+    items:[
+      {id:'ru1',name:'Cadre de lit simple',phase:'j1',store:'Marketplace (Facebook)',price:90,status:'pending',tip:'Lit simple séparé pour que Ruth ait son propre espace.',img:'https://images.unsplash.com/photo-1617103996702-96ff29b1c467?w=80&q=60'},
+      {id:'ru2',name:'Matelas simple neuf',phase:'j1',store:'Econoplus',price:130,status:'pending',tip:'Matelas neuf seulement. Même base que Rose pour garder les coûts équilibrés.',img:'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=80&q=60'},
+      {id:'ru3',name:'Literie choisie par Ruth',phase:'j1',store:'Walmart',price:45,status:'pending',tip:'Laisser Ruth choisir une palette différente pour que la chambre ait sa personnalité.',img:'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=80&q=60'},
+      {id:'ru4',name:'Bureau devoirs / lecture',phase:'j1',store:'IKEA',price:70,status:'pending',tip:'Un bureau plus calme, avec rangement vertical pour livres et cahiers.',img:'https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=80&q=60'},
+      {id:'ru5',name:'Rangement vêtements + livres',phase:'j1',store:'IKEA',price:65,status:'pending',tip:'Bibliothèque basse ou KALLAX avec paniers pour garder les choses accessibles.',img:'https://images.unsplash.com/photo-1558997519-83ea9252edf8?w=80&q=60'},
+      {id:'ru6',name:'Lampe de lecture',phase:'p2',store:'Hart',price:20,status:'pending',tip:'Lampe orientable pour lire sans éclairer toute la chambre.',img:'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=80&q=60'},
+      {id:'ru7',name:'Tapis calme grand format',phase:'p2',store:'Winners / HomeSense',price:38,status:'pending',tip:'Tons doux, facile à aspirer, confortable au pied du lit.',img:'https://images.unsplash.com/photo-1584467735815-f778f274e296?w=80&q=60'},
+      {id:'ru8',name:'Coin déco Ruth',phase:'p3',store:'Dollarama',price:18,status:'pending',tip:'Cadres, photos, affiches ou petite tablette déco.',img:'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=80&q=60'},
+    ]
+  },
+  maman:{
     name:'Chambre maman',img:'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=80&q=70',
     items:[
       {id:'mm1',name:'Cadre de lit queen + tête rembourrée',phase:'j1',store:'Marketplace (Facebook)',price:250,status:'pending',tip:'La tête rembourrée fait tout le "wow". Marketplace = économie de 200$. Wayfair -30% aussi.',img:'https://images.unsplash.com/photo-1588046130717-0eb0c9a3ba15?w=80&q=60'},
@@ -777,6 +883,28 @@ const ROOMS = {
       {id:'bu7',name:'Paniers à linge x2',phase:'p2',store:'Dollarama',price:15,status:'pending',tip:'2 paniers pour séparer couleurs et blancs. Dollarama suffit largement.',img:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=80&q=60'},
       {id:'bu8',name:'Déco légère (plantes, cadres)',phase:'p3',store:'Dollarama',price:15,status:'pending',tip:'Petite déco pour rendre la buanderie moins austère.',img:'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=80&q=60'},
     ]
+  },
+  garage:{
+    name:'Garage',img:'https://images.unsplash.com/photo-1625602812206-5ec545ca1231?w=80&q=70',
+    items:[
+      {id:'gr1',name:'Étagères murales robustes',phase:'j1',store:'IKEA',price:90,status:'pending',tip:'Étagères solides pour bacs, outils et produits saisonniers. Mesurer le mur avant achat.',img:'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=80&q=60'},
+      {id:'gr2',name:'Bacs transparents étiquetés x8',phase:'j1',store:'Walmart',price:80,status:'pending',tip:'Bacs transparents pour voir rapidement le contenu. Étiquettes par catégorie.',img:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=80&q=60'},
+      {id:'gr3',name:'Crochets muraux vélos / outils',phase:'j1',store:'Amazon',price:45,status:'pending',tip:'Libérer le sol. Crochets pour vélos, pelles, balais et rallonges.',img:'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=80&q=60'},
+      {id:'gr4',name:'Établi pliant ou compact',phase:'p2',store:'Marketplace (Facebook)',price:90,status:'pending',tip:'Un petit établi suffit pour réparations rapides et assemblage de meubles.',img:'https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=80&q=60'},
+      {id:'gr5',name:'Éclairage LED atelier',phase:'p2',store:'Amazon',price:45,status:'pending',tip:'Barres LED pour rendre le garage vraiment utilisable le soir.',img:'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=80&q=60'},
+      {id:'gr6',name:'Tapis d’entrée robuste',phase:'p2',store:'Costco',price:35,status:'pending',tip:'Pour garder la boue et la neige hors de la maison.',img:'https://images.unsplash.com/photo-1584467735815-f778f274e296?w=80&q=60'},
+    ]
+  },
+  hangar:{
+    name:'Hangar',img:'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=80&q=70',
+    items:[
+      {id:'hg1',name:'Bacs saisonniers extérieurs x6',phase:'j1',store:'Walmart',price:70,status:'pending',tip:'Regrouper jardin, hiver, jeux extérieurs et outils longs par bac.',img:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=80&q=60'},
+      {id:'hg2',name:'Support outils de jardin',phase:'j1',store:'Amazon',price:45,status:'pending',tip:'Support vertical pour râteaux, pelles, balais et tuyau.',img:'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=80&q=60'},
+      {id:'hg3',name:'Étagère métal résistante',phase:'j1',store:'Costco',price:90,status:'pending',tip:'Étagère métal pour produits lourds et bacs saisonniers.',img:'https://images.unsplash.com/photo-1558997519-83ea9252edf8?w=80&q=60'},
+      {id:'hg4',name:'Lumière solaire / détecteur',phase:'p2',store:'Amazon',price:35,status:'pending',tip:'Sécurise l’accès le soir sans tirer de fil.',img:'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=80&q=60'},
+      {id:'hg5',name:'Crochets muraux extérieurs',phase:'p2',store:'Dollarama',price:15,status:'pending',tip:'Pour rallonges, boyau, sacs réutilisables et petits outils.',img:'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=80&q=60'},
+      {id:'hg6',name:'Nettoyage + étiquettes',phase:'p2',store:'Dollarama',price:10,status:'pending',tip:'Un petit budget pour rendre le hangar lisible dès le premier rangement.',img:'https://images.unsplash.com/photo-1563453392212-326f5e854473?w=80&q=60'},
+    ]
   }
 };
 
@@ -806,8 +934,9 @@ function applyCustomItemsToRooms(){
     room.items = room.items.filter(item=>!item.custom);
   });
   Object.entries(customItems).forEach(([roomKey,items])=>{
-    if(ROOMS[roomKey] && Array.isArray(items)){
-      items.forEach(item=>ROOMS[roomKey].items.push(item));
+    const targetKey=roomKey==='filles'?'rose':roomKey;
+    if(ROOMS[targetKey] && Array.isArray(items)){
+      items.forEach(item=>ROOMS[targetKey].items.push(item));
     }
   });
 }
@@ -973,14 +1102,18 @@ function calcDone(){
 
 function updateHero(){
   let t=0;
+  let j1=0;
   Object.entries(ROOMS).forEach(([rk,room])=>{
     t+=calcRoomTotal(rk);
+    j1+=calcRoomPhase(rk,'j1');
   });
   const done=calcDone();
   document.getElementById('heroTotal').textContent=fmt(t);
   document.getElementById('heroDone').textContent=fmt(done);
   document.getElementById('heroLeft').textContent=fmt(t-done);
   document.getElementById('grandTotal').textContent='~'+fmt(t);
+  const ovJ1=document.getElementById('ovJ1');
+  if(ovJ1) ovJ1.textContent=fmt(j1);
   document.getElementById('gtDone').textContent=fmt(done);
   document.getElementById('gtLeft').textContent=fmt(t-done);
   document.getElementById('ovLeft').textContent=fmt(t-done);
@@ -1002,6 +1135,21 @@ function buildPhaseNav(roomKey){
 
 function esc(value){
   return String(value ?? '').replace(/[&<>'"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
+}
+
+function fallbackImage(img,label=''){
+  if(!img) return;
+  const text=(label || img.alt || '?').trim();
+  img.removeAttribute('src');
+  img.classList.add('img-fallback');
+  img.textContent=text.slice(0,1) || '?';
+}
+
+function prepareImages(){
+  document.querySelectorAll('img').forEach(img=>{
+    img.onerror=()=>fallbackImage(img);
+    if(img.complete && img.naturalWidth===0) fallbackImage(img);
+  });
 }
 
 function getStoreOptions(selected){
@@ -1155,7 +1303,7 @@ function buildItems(roomKey){
     const statusLabel=status==='done'?'Acheté':status==='urgent'?'Urgent':'À acheter';
     const statusCls='item-status st-'+status;
     const imageHtml=imageSrc
-      ? `<img class="item-img" src="${esc(imageSrc)}" alt="${esc(item.name)}" onerror="this.style.background='#E8DFD0';this.src='data:image/svg+xml,<svg/>'">`
+      ? `<img class="item-img" src="${esc(imageSrc)}" alt="${esc(item.name)}" onerror="fallbackImage(this,'${esc(item.name)}')">`
       : `<div class="item-img">+</div>`;
     return `<div class="item ${item.custom?'item-custom':''}" id="card-${esc(item.id)}">
       <div class="item-head" onclick="toggleItem('${esc(item.id)}')">
@@ -1426,6 +1574,7 @@ const TOUR_STEPS = [
 ];
 
 function prepareReveals(){
+  prepareImages();
   const targets=document.querySelectorAll('.rc,.item,.bov-card,.tot-card,.add-box,.sh-tot');
   targets.forEach((el,i)=>{
     el.classList.add('reveal');
@@ -1488,7 +1637,7 @@ window.deleteContribution=deleteContribution;window.startTour=startTour;
 window.closeTour=closeTour;
 window.nextTourStep=nextTourStep;
 window.prevTourStep=prevTourStep;document.addEventListener('keydown',e=>{if(e.key==='Escape') closeTour();});
-window.addEventListener('load',()=>{prepareReveals();setTimeout(()=>document.querySelectorAll('.reveal').forEach(el=>el.classList.add('in-view')),250);});
+window.addEventListener('load',()=>{prepareImages();prepareReveals();setTimeout(()=>document.querySelectorAll('.reveal').forEach(el=>el.classList.add('in-view')),250);});
 // ===================== NAV =====================
 function goSec(id,idx){
   document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
@@ -1502,7 +1651,7 @@ function goSec(id,idx){
   }
   window.scrollTo(0,document.getElementById('mainNav').offsetTop-1);
   // build if room
-  const roomKeys=['','','','cuisine','salon','manger','sdb','garcons','filles','maman','soussol','buanderie'];
+  const roomKeys=['','','','cuisine','salon','manger','sdb','garcons','rose','ruth','maman','soussol','buanderie','garage','hangar'];
   const rk=roomKeys[idx];
   if(rk && ROOMS[rk]){
     buildPhaseNav(rk);
