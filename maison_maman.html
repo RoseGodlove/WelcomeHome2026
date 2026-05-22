@@ -2547,10 +2547,10 @@
         }
 
         .chat-msg {
-            max-width: 80%;
+            max-width: 82%;
             display: flex;
             flex-direction: column;
-            gap: 3px
+            gap: 2px
         }
 
             .chat-msg.mine {
@@ -2560,8 +2560,46 @@
 
             .chat-msg.theirs {
                 align-self: flex-start;
-                align-items: flex-start
+                align-items: flex-start;
+                flex-direction: row;
+                align-items: flex-end;
+                gap: 8px
             }
+
+                .chat-msg.theirs .chat-msg-body {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 2px;
+                    align-items: flex-start
+                }
+
+            .chat-msg.mine .chat-msg-body {
+                display: flex;
+                flex-direction: column;
+                gap: 2px;
+                align-items: flex-end
+            }
+
+        .chat-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            color: #fff;
+            flex-shrink: 0;
+            margin-bottom: 2px
+        }
+
+        .chat-sender-name {
+            font-size: 10px;
+            font-weight: 600;
+            margin-bottom: 2px;
+            letter-spacing: .3px
+        }
 
         .chat-bubble {
             padding: 10px 14px;
@@ -3966,10 +4004,10 @@
             if (!name) { document.getElementById('part-name')?.focus(); return; }
             const data = { name, role: (document.getElementById('part-role')?.value || '').trim(), note: (document.getElementById('part-note')?.value || '').trim() };
             if (editingParticipantId) { participants = participants.map(p => p.id === editingParticipantId ? { ...p, ...data } : p); } else { participants.push({ id: 'p-' + Date.now(), ...data }); }
-            saveParticipants(); resetParticipantForm(); buildCollab(); refreshVisibleRoom(); celebrate();
+            saveParticipants(); resetParticipantForm(); buildCollab(); refreshVisibleRoom(); celebrate(); populateChatParticipantSelect();
         }
         function editParticipant(id) { const p = participants.find(x => x.id === id); if (!p) return; editingParticipantId = id; document.getElementById('part-name').value = p.name || ''; document.getElementById('part-role').value = p.role || ''; document.getElementById('part-note').value = p.note || ''; document.getElementById('part-save').textContent = 'Enregistrer participant'; }
-        function deleteParticipant(id) { participants = participants.filter(p => p.id !== id); contributions = contributions.map(c => c.participantId === id ? { ...c, participantId: '' } : c); Object.values(state).forEach(st => { if (st.payer === id) st.payer = ''; }); saveParticipants(); saveContributions(); save(); buildCollab(); refreshVisibleRoom(); }
+        function deleteParticipant(id) { participants = participants.filter(p => p.id !== id); contributions = contributions.map(c => c.participantId === id ? { ...c, participantId: '' } : c); Object.values(state).forEach(st => { if (st.payer === id) st.payer = ''; }); saveParticipants(); saveContributions(); save(); buildCollab(); refreshVisibleRoom(); populateChatParticipantSelect(); }
 
         function resetContributionForm() { editingContributionId = '';['contrib-amount', 'contrib-label', 'contrib-note'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; }); const d = document.getElementById('contrib-date'); if (d) d.value = new Date().toISOString().slice(0, 10); const st = document.getElementById('contrib-status'); if (st) st.value = 'paid'; const it = document.getElementById('contrib-item'); if (it) it.value = ''; const btn = document.getElementById('contrib-save'); if (btn) btn.textContent = 'Ajouter contribution'; }
         function saveContributionForm() {
@@ -4410,6 +4448,21 @@
         document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeLightbox(); });
 
         // ===================== CHAT =====================
+        // Palette de couleurs par participant (tournante)
+        var CHAT_COLORS = [
+            '#314C5A', '#496E57', '#8B5E3C', '#7C3AED', '#0F766E',
+            '#B45309', '#1D4ED8', '#9D174D', '#065F46', '#6B21A8'
+        ];
+        function getChatColor(name) {
+            if (!name) return '#6B7280';
+            var hash = 0; for (var i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) & 0xFFFFFF;
+            // Use participant index if available for consistency
+            var idx = participants.findIndex(function (p) { return p.name === name; });
+            if (idx >= 0) return CHAT_COLORS[idx % CHAT_COLORS.length];
+            return CHAT_COLORS[Math.abs(hash) % CHAT_COLORS.length];
+        }
+        function getChatInitial(name) { return (name || '?').trim().slice(0, 1).toUpperCase(); }
+
         var chatName = localStorage.getItem('chat_name') || '';
         var _chatOpen = false;
         var _chatReady = false;
@@ -4422,12 +4475,21 @@
             var panel = document.getElementById('chatPanel');
             if (!panel) return;
             panel.classList.toggle('on', _chatOpen);
+
+            // Validate chatName is still a registered participant
+            if (chatName && !participants.find(function (p) { return p.name === chatName; })) {
+                chatName = ''; localStorage.removeItem('chat_name');
+            }
+
+            populateChatParticipantSelect();
             var nb = document.getElementById('chatNameBar');
             if (nb) nb.style.display = (!chatName && _chatOpen) ? 'flex' : 'none';
+
             if (_chatOpen) {
                 _chatUnread = 0;
                 var b = document.getElementById('chatBadge');
                 if (b) { b.textContent = '0'; b.classList.remove('on'); }
+                updateChatHeader();
                 setTimeout(function () {
                     var m = document.getElementById('chatMessages');
                     if (m) m.scrollTop = m.scrollHeight;
@@ -4439,11 +4501,42 @@
             }
         }
         function saveChatName() {
-            var v = (document.getElementById('chatNameInput').value || '').trim();
-            if (!v) return;
+            var sel = document.getElementById('chatParticipantSelect');
+            var v = sel ? sel.value.trim() : '';
+            if (!v) { if (sel) sel.focus(); return; }
             chatName = v; localStorage.setItem('chat_name', chatName);
+            // Validate still a participant
+            if (!participants.find(function (p) { return p.name === chatName; })) {
+                chatName = ''; localStorage.removeItem('chat_name');
+                appendSysMsg('⚠️ Participant introuvable. Ajoute-toi dans la Caisse familiale d'abord.');
+        return;
+            }
             var nb = document.getElementById('chatNameBar'); if (nb) nb.style.display = 'none';
+            updateChatHeader();
             var inp = document.getElementById('chatInput'); if (inp) inp.focus();
+        }
+        function updateChatHeader() {
+            var color = getChatColor(chatName);
+            var initial = getChatInitial(chatName);
+            var avatar = document.querySelector('.chat-header-avatar');
+            if (avatar && chatName) {
+                avatar.style.background = color;
+                avatar.textContent = initial;
+            }
+            var nameEl = document.querySelector('.chat-header-name');
+            if (nameEl && chatName) nameEl.textContent = chatName + ' · Discussion familiale';
+        }
+        function populateChatParticipantSelect() {
+            var sel = document.getElementById('chatParticipantSelect');
+            if (!sel) return;
+            var current = sel.value;
+            sel.innerHTML = '<option value="">-- Choisir mon nom --</option>';
+            participants.forEach(function (p) {
+                var opt = document.createElement('option');
+                opt.value = p.name; opt.textContent = p.name;
+                if (p.name === current || p.name === chatName) opt.selected = true;
+                sel.appendChild(opt);
+            });
         }
         function chatKeydown(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMessage(); } }
         function chatAutoResize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 100) + 'px'; }
@@ -4465,14 +4558,48 @@
             if (id && _seenIds.has(id)) return;
             if (id) _seenIds.add(id);
             var isMine = msg.sender === chatName;
+            var color = getChatColor(msg.sender);
+            var initial = getChatInitial(msg.sender);
             var time = new Date(msg.created_at || Date.now()).toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' });
+
             var d = document.createElement('div');
             d.className = 'chat-msg ' + (isMine ? 'mine' : 'theirs');
-            var bubble = document.createElement('div'); bubble.className = 'chat-bubble'; bubble.textContent = msg.text;
-            var meta = document.createElement('div'); meta.className = 'chat-msg-meta'; meta.dataset.sender = msg.sender;
-            meta.textContent = (isMine ? '' : msg.sender + ' \u00b7 ') + time;
-            d.appendChild(bubble); d.appendChild(meta);
-            msgs.appendChild(d); msgs.scrollTop = msgs.scrollHeight;
+            d.dataset.sender = msg.sender;
+
+            if (!isMine) {
+                var avatar = document.createElement('div');
+                avatar.className = 'chat-avatar';
+                avatar.style.background = color;
+                avatar.textContent = initial;
+                d.appendChild(avatar);
+            }
+
+            var body = document.createElement('div');
+            body.className = 'chat-msg-body';
+
+            if (!isMine) {
+                var senderName = document.createElement('div');
+                senderName.className = 'chat-sender-name';
+                senderName.style.color = color;
+                senderName.textContent = msg.sender;
+                body.appendChild(senderName);
+            }
+
+            var bubble = document.createElement('div');
+            bubble.className = 'chat-bubble';
+            bubble.textContent = msg.text;
+            if (isMine) bubble.style.background = 'linear-gradient(135deg,' + color + ',' + color + 'cc)';
+            body.appendChild(bubble);
+
+            var meta = document.createElement('div');
+            meta.className = 'chat-msg-meta';
+            meta.dataset.sender = msg.sender;
+            meta.textContent = time;
+            body.appendChild(meta);
+
+            d.appendChild(body);
+            msgs.appendChild(d);
+            msgs.scrollTop = msgs.scrollHeight;
         }
         function appendSysMsg(text) {
             var msgs = document.getElementById('chatMessages'); if (!msgs) return;
@@ -4558,8 +4685,13 @@
             <button class="chat-close" onclick="toggleChat()">&#10005;</button>
         </div>
         <div class="chat-name-bar" id="chatNameBar" style="display:none">
-            <input class="chat-name-input" id="chatNameInput" placeholder="Ton pr&#233;nom (ex: Maman, Rose&#8230;)" maxlength="20" onkeydown="if(event.key==='Enter')saveChatName()">
-            <button class="chat-name-save" onclick="saveChatName()">OK</button>
+            <div style="font-size:12px;color:var(--ar);flex:1">
+                <div style="font-weight:600;margin-bottom:6px">Qui es-tu ?</div>
+                <select class="ep-select" id="chatParticipantSelect" style="width:100%">
+                    <option value="">-- Choisir mon nom --</option>
+                </select>
+            </div>
+            <button class="chat-name-save" onclick="saveChatName()" style="align-self:flex-end">OK</button>
         </div>
         <div class="chat-messages" id="chatMessages">
             <div class="chat-system">&#127969; Bienvenue dans la discussion familiale</div>
