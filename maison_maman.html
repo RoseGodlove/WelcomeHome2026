@@ -3894,11 +3894,20 @@
             if (btn) { btn.textContent = 'Enregistr\u00e9 &#10003;'; btn.style.background = '#2D5A30'; setTimeout(() => { btn.textContent = 'Enregistrer'; btn.style.background = ''; }, 1500); }
         }
 
-        // ===================== CHAT =====================
+        // ===================== CHAT — persistance Supabase Realtime =====================
+        // Architecture : INSERT dans maison_chat → Postgres Realtime → tous les clients
+        // Broadcast séparé UNIQUEMENT pour "en train d'écrire" (pas besoin de persistance)
         let chatName = localStorage.getItem('chat_name') || '';
         let _chatOpen = false;
-        let _chatChan = null;
+        let _chatReady = false;      // initChat appelé une seule fois
         let _chatUnread = 0;
+        let _typingChan = null;      // canal broadcast séparé pour le "typing"
+        let _seenIds = new Set();    // évite les doublons (message qu'on vient d'insérer)
+
+        // ---- UI helpers ----
+        function _chatMsgsEl() { return document.getElementById('chatMessages'); }
+        function _chatStatusEl() { return document.getElementById('chatOnlineStatus'); }
+        function _chatBadgeEl() { return document.getElementById('chatBadge'); }
 
         function toggleChat() {
             _chatOpen = !_chatOpen;
@@ -3907,81 +3916,183 @@
             if (nb) nb.style.display = chatName ? 'none' : 'flex';
             if (_chatOpen) {
                 _chatUnread = 0;
-                const b = document.getElementById('chatBadge');
+                const b = _chatBadgeEl();
                 if (b) { b.textContent = '0'; b.classList.remove('on'); }
                 setTimeout(() => {
-                    const m = document.getElementById('chatMessages');
+                    const m = _chatMsgsEl();
                     if (m) m.scrollTop = m.scrollHeight;
                     document.getElementById('chatInput')?.focus();
                 }, 380);
                 initChat();
             }
         }
+
         function saveChatName() {
             const v = (document.getElementById('chatNameInput')?.value || '').trim();
             if (!v) return;
-            chatName = v; localStorage.setItem('chat_name', chatName);
-            const b = document.getElementById('chatNameBar'); if (b) b.style.display = 'none';
+            chatName = v;
+            localStorage.setItem('chat_name', chatName);
+            const b = document.getElementById('chatNameBar');
+            if (b) b.style.display = 'none';
             document.getElementById('chatInput')?.focus();
+            // met à jour le style "mine/theirs" pour les msgs déjà affichés
+            document.querySelectorAll('.chat-msg').forEach(el => {
+                const meta = el.querySelector('.chat-msg-meta');
+                if (meta && meta.dataset.sender === chatName) {
+                    el.classList.remove('theirs'); el.classList.add('mine');
+                }
+            });
         }
+
         function chatKeydown(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMessage(); } }
         function chatAutoResize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 100) + 'px'; }
-        function appendChatMessage(msg) {
-            const msgs = document.getElementById('chatMessages'); if (!msgs) return;
+
+        // ---- Affichage d'un message ----
+        function appendChatMessage(msg, prepend = false) {
+            const msgs = _chatMsgsEl(); if (!msgs) return;
+            if (msg.id && _seenIds.has(msg.id)) return;
+            if (msg.id) _seenIds.add(msg.id);
             const isMine = msg.sender === chatName;
-            const time = new Date(msg.created_at || Date.now()).toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' });
+            const ts = msg.created_at || msg.inserted_at || new Date().toISOString();
+            const time = new Date(ts).toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' });
             const d = document.createElement('div');
             d.className = 'chat-msg ' + (isMine ? 'mine' : 'theirs');
-            d.innerHTML = `<div class="chat-bubble">${esc(msg.text)}</div><div class="chat-msg-meta">${isMine ? '' : esc(msg.sender) + ' \u00b7 '}${time}</div>`;
+            d.innerHTML = `<div class="chat-bubble">${esc(msg.text)}</div>`
+                + `<div class="chat-msg-meta" data-sender="${esc(msg.sender)}">`
+                + `${isMine ? '' : esc(msg.sender) + ' · '}${time}</div>`;
+            if (prepend) msgs.insertBefore(d, msgs.firstChild);
+            else msgs.appendChild(d);
+            msgs.scrollTop = msgs.scrollHeight;
+        }
+
+        function appendSystemMsg(text) {
+            const msgs = _chatMsgsEl(); if (!msgs) return;
+            const d = document.createElement('div');
+            d.className = 'chat-system'; d.textContent = text;
             msgs.appendChild(d); msgs.scrollTop = msgs.scrollHeight;
         }
+
+        // ---- Typing indicator (broadcast seulement, pas besoin de persistance) ----
         let _thTimer = null;
         function broadcastTyping() {
-            if (!_chatChan || !chatName) return;
-            _chatChan.send({ type: 'broadcast', event: 'typing', payload: { sender: chatName } });
+            if (!_typingChan || !chatName) return;
+            _typingChan.send({ type: 'broadcast', event: 'typing', payload: { sender: chatName } });
         }
         function showTyping(sender) {
             if (sender === chatName) return;
             const el = document.getElementById('chatTyping');
             if (el) el.classList.add('on');
             clearTimeout(_thTimer);
-            _thTimer = setTimeout(() => { const e = document.getElementById('chatTyping'); if (e) e.classList.remove('on'); }, 2200);
+            _thTimer = setTimeout(() => {
+                const e = document.getElementById('chatTyping'); if (e) e.classList.remove('on');
+            }, 2400);
         }
+
+        // ---- Envoi d'un message — INSERT en DB, Realtime le diffuse ----
         async function sendChatMessage() {
             if (!chatName) {
                 const b = document.getElementById('chatNameBar');
                 if (b) { b.style.display = 'flex'; document.getElementById('chatNameInput')?.focus(); }
                 return;
             }
+            if (!supabaseClient) {
+                appendSystemMsg('⚠️ Pas de connexion — message non envoyé.');
+                return;
+            }
             const inp = document.getElementById('chatInput');
             const text = (inp?.value || '').trim(); if (!text) return;
             inp.value = ''; inp.style.height = 'auto';
-            const msg = { sender: chatName, text, created_at: new Date().toISOString() };
-            appendChatMessage(msg);
-            if (_chatChan) _chatChan.send({ type: 'broadcast', event: 'message', payload: msg });
-            if (supabaseClient) { try { await supabaseClient.from('maison_chat').insert({ sender: msg.sender, text: msg.text }); } catch (e) { } }
+
+            // Affichage optimiste immédiat
+            const tempId = 'tmp-' + Date.now();
+            const tempMsg = { id: tempId, sender: chatName, text, created_at: new Date().toISOString() };
+            appendChatMessage(tempMsg);
+
+            // INSERT → Realtime va le renvoyer à tout le monde (y compris soi-même via le listener)
+            // On utilise _seenIds pour ne pas l'afficher deux fois
+            const { data, error } = await supabaseClient
+                .from('maison_chat')
+                .insert({ sender: chatName, text })
+                .select()
+                .single();
+
+            if (error) {
+                appendSystemMsg('⚠️ Erreur envoi : ' + error.message);
+            } else if (data) {
+                // Enregistrer le vrai ID pour éviter le doublon quand Realtime le renvoie
+                _seenIds.add(data.id);
+            }
         }
+
+        // ---- Initialisation — une seule fois ----
         async function initChat() {
-            if (_chatChan) return;
-            const sel = document.getElementById('chatOnlineStatus');
-            if (!supabaseClient) { if (sel) sel.textContent = 'Mode local'; return; }
-            try {
-                const { data } = await supabaseClient.from('maison_chat').select('*').order('created_at', { ascending: true }).limit(80);
-                if (data && data.length > 0) {
-                    const msgs = document.getElementById('chatMessages');
-                    if (msgs) msgs.innerHTML = '<div class="chat-system">Bienvenue dans la discussion familiale &#127969;</div>';
-                    data.forEach(m => appendChatMessage(m));
-                }
-            } catch (e) { }
-            _chatChan = supabaseClient.channel('maison-chat-v3')
-                .on('broadcast', { event: 'message' }, ({ payload }) => {
-                    if (payload.sender === chatName) return;
-                    appendChatMessage(payload);
-                    if (!_chatOpen) { _chatUnread++; const b = document.getElementById('chatBadge'); if (b) { b.textContent = _chatUnread; b.classList.add('on'); } }
-                })
+            if (_chatReady) return;
+            _chatReady = true;
+            const sel = _chatStatusEl();
+            if (sel) sel.textContent = 'Connexion…';
+
+            if (!supabaseClient) {
+                if (sel) sel.textContent = 'Hors-ligne — sync désactivée';
+                appendSystemMsg('Mode local : les messages ne sont pas partagés entre appareils.');
+                return;
+            }
+
+            // 1. Charger l'historique (80 derniers messages)
+            const { data: history, error: histErr } = await supabaseClient
+                .from('maison_chat')
+                .select('id, sender, text, created_at')
+                .order('created_at', { ascending: true })
+                .limit(80);
+
+            if (histErr) {
+                appendSystemMsg('⚠️ Impossible de charger l'historique : ' + histErr.message);
+      } else if (history && history.length > 0) {
+                const msgs = _chatMsgsEl();
+                if (msgs) msgs.innerHTML = '<div class="chat-system">&#127969; Discussion familiale — ' + history.length + ' messages</div>';
+                history.forEach(m => appendChatMessage(m));
+            }
+
+            // 2. S'abonner aux nouveaux messages via Postgres Realtime (INSERT sur maison_chat)
+            //    C'est ça qui manquait : écouter la TABLE, pas juste le broadcast
+            supabaseClient
+                .channel('maison-chat-realtime')
+                .on(
+                    'postgres_changes',
+                    { event: 'INSERT', schema: 'public', table: 'maison_chat' },
+                    (payload) => {
+                        const msg = payload.new;
+                        // N'affiche que si on ne l'a pas déjà (optimistic UI)
+                        if (!_seenIds.has(msg.id)) {
+                            appendChatMessage(msg);
+                            if (!_chatOpen) {
+                                _chatUnread++;
+                                const b = _chatBadgeEl();
+                                if (b) { b.textContent = _chatUnread; b.classList.add('on'); }
+                            }
+                        }
+                    }
+                )
+                .subscribe(status => {
+                    if (sel) {
+                        if (status === 'SUBSCRIBED') sel.textContent = '● En ligne · Discussion active';
+                        else if (status === 'CHANNEL_ERROR') sel.textContent = '⚠️ Erreur connexion';
+                        else if (status === 'CLOSED') sel.textContent = '○ Déconnecté';
+                    }
+                });
+
+            // 3. Canal broadcast séparé pour "en train d'écrire" uniquement
+            _typingChan = supabaseClient
+                .channel('maison-chat-typing')
                 .on('broadcast', { event: 'typing' }, ({ payload }) => showTyping(payload.sender))
-                .subscribe(s => { if (s === 'SUBSCRIBED' && sel) sel.textContent = 'En ligne \u00b7 Discussion active'; });
+                .subscribe();
+
+            if (sel) sel.textContent = '● En ligne · Discussion active';
         }
+
+        // Lancer initChat dès le chargement pour recevoir les notifs même chat fermé
+        window.addEventListener('load', () => {
+            if (supabaseClient) setTimeout(initChat, 1200);
+        });
     </script>
 
     <!-- LIGHTBOX -->
