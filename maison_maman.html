@@ -1923,7 +1923,12 @@
         }
 
         .hidden-file-input {
-            display: none
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+            overflow: hidden;
+            pointer-events: none
         }
         /* ===== DELETE ===== */
         .ep-delete {
@@ -2409,7 +2414,12 @@
         }
 
         .hidden-file-input {
-            display: none
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+            overflow: hidden;
+            pointer-events: none
         }
         /* ===== DELETE ===== */
         .ep-delete {
@@ -3563,8 +3573,17 @@
         // ===================== BUILD FUNCTIONS =====================
         function fmt(n) { return n.toLocaleString('fr-CA', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + '$'; }
 
+        function getEffectivePhase(item) {
+            const saved = state[item.id] || {};
+            return saved.phase || item.phase || 'j1';
+        }
+
+        function getRoomPhases(roomKey) {
+            return Object.keys(PHASES).filter(p => ROOMS[roomKey].items.some(i => getEffectivePhase(i) === p));
+        }
+
         function getPhaseItems(roomKey, phase) {
-            return ROOMS[roomKey].items.filter(i => i.phase === phase);
+            return ROOMS[roomKey].items.filter(i => getEffectivePhase(i) === phase);
         }
 
         function calcRoomPhase(roomKey, phase) {
@@ -3620,8 +3639,8 @@
         function buildPhaseNav(roomKey) {
             const nav = document.getElementById('phase-nav-' + roomKey);
             if (!nav) return;
-            const phases = Object.keys(PHASES).filter(p => ROOMS[roomKey].items.some(i => i.phase === p));
-            if (!currentPhase[roomKey]) currentPhase[roomKey] = phases[0];
+            const phases = getRoomPhases(roomKey);
+            if (!currentPhase[roomKey] || !phases.includes(currentPhase[roomKey])) currentPhase[roomKey] = phases[0];
             nav.innerHTML = phases.map(p => `<button class="pn-btn ${p === currentPhase[roomKey] ? 'on' : ''}" onclick="switchPhase('${roomKey}','${p}')">${PHASES[p]}</button>`).join('');
         }
 
@@ -3853,7 +3872,7 @@
         function buildTotals(roomKey) {
             const cont = document.getElementById('totals-' + roomKey);
             if (!cont) return;
-            const phases = Object.keys(PHASES).filter(p => ROOMS[roomKey].items.some(i => i.phase === p));
+            const phases = getRoomPhases(roomKey);
             cont.innerHTML = phases.map(p => `<div class="sh-tot"><div class="sh-tot-v">${fmt(calcRoomPhase(roomKey, p))}</div><div class="sh-tot-l">${PHASES[p]}</div></div>`).join('');
         }
 
@@ -4031,7 +4050,7 @@
             cont.innerHTML = Object.entries(ROOMS).map(([rk, room]) => {
                 const roomTotal = calcRoomTotal(rk);
                 const pct = Math.round((roomTotal / grand) * 100);
-                const phases = Object.keys(PHASES).filter(p => room.items.some(i => i.phase === p));
+                const phases = getRoomPhases(rk);
                 return `<div class="bov-card">
           <div class="bov-header">
             <div class="bov-room">${room.name}</div>
@@ -4041,7 +4060,7 @@
           <div class="bov-phases">
             ${phases.map(p => {
                     const pTotal = calcRoomPhase(rk, p);
-                    const done = room.items.filter(i => i.phase === p && (state[i.id] || {}).status === 'done').reduce((s, i) => s + (parseFloat((state[i.id] || {}).price) || i.price), 0);
+                    const done = room.items.filter(i => getEffectivePhase(i) === p && (state[i.id] || {}).status === 'done').reduce((s, i) => s + (parseFloat((state[i.id] || {}).price) || i.price), 0);
                     return `<div class="bov-phase-row">
                 <span class="bov-phase-name"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${colors[p]};margin-right:6px;vertical-align:middle"></span>${PHASES[p]}</span>
                 <span class="bov-phase-price">${fmt(pTotal)} <span style="font-size:10px;color:#16A34A">${done > 0 ? '(' + fmt(done) + ' acheté)' : ''}</span></span>
@@ -4179,61 +4198,20 @@
         function buildPhotoUploadSection(itemId, currentImg) {
             var sid = _sid(itemId);
             var hasImg = !!(currentImg && currentImg.length > 2);
-            var wrap = document.createElement('div');
-
-            var lbl = document.createElement('div');
-            lbl.className = 'ep-label';
-            lbl.style.marginBottom = '5px';
-            lbl.textContent = 'Photo';
-            wrap.appendChild(lbl);
-
-            var prev = document.createElement('div');
-            prev.className = 'photo-preview' + (hasImg ? ' on' : '');
-            prev.id = 'pp-' + sid;
-            if (hasImg) {
-                var pimg = document.createElement('img');
-                pimg.src = currentImg; pimg.id = 'ppi-' + sid;
-                pimg.style.cssText = 'cursor:zoom-in;width:100%;max-height:180px;object-fit:cover;border-radius:10px;display:block';
-                (function (src) { pimg.onclick = function () { openLightbox(src, 'Photo'); }; })(currentImg);
-                prev.appendChild(pimg);
-                var rem = document.createElement('button');
-                rem.className = 'photo-preview-remove'; rem.textContent = '\u2715';
-                (function (s) { rem.onclick = function () { removePhoto(s); }; })(sid);
-                prev.appendChild(rem);
-            }
-            wrap.appendChild(prev);
-
-            var btns = document.createElement('div');
-            btns.className = 'photo-upload-btns'; btns.id = 'pb-' + sid;
-            if (hasImg) btns.style.display = 'none';
-            var btnCam = document.createElement('button');
-            btnCam.className = 'photo-btn'; btnCam.textContent = '\uD83D\uDCF7 Cam\u00e9ra';
-            (function (s) { btnCam.onclick = function () { triggerCamera(s); }; })(sid);
-            var btnFile = document.createElement('button');
-            btnFile.className = 'photo-btn'; btnFile.textContent = '\uD83D\uDDBC Fichier';
-            (function (s) { btnFile.onclick = function () { triggerFile(s); }; })(sid);
-            btns.appendChild(btnCam); btns.appendChild(btnFile);
-            wrap.appendChild(btns);
-
-            var inpFile = document.createElement('input');
-            inpFile.type = 'file'; inpFile.accept = 'image/*';
-            inpFile.className = 'hidden-file-input'; inpFile.id = 'fi-' + sid;
-            (function (s) { inpFile.onchange = function (ev) { handleFileInput(ev, s); }; })(sid);
-            wrap.appendChild(inpFile);
-
-            var inpCam = document.createElement('input');
-            inpCam.type = 'file'; inpCam.accept = 'image/*';
-            inpCam.setAttribute('capture', 'environment');
-            inpCam.className = 'hidden-file-input'; inpCam.id = 'ci-' + sid;
-            (function (s) { inpCam.onchange = function (ev) { handleFileInput(ev, s); }; })(sid);
-            wrap.appendChild(inpCam);
-
-            var inpH = document.createElement('input');
-            inpH.type = 'hidden'; inpH.id = 'inp-img-' + sid;
-            inpH.value = hasImg ? currentImg : '';
-            wrap.appendChild(inpH);
-
-            return wrap.outerHTML;
+            var imgHtml = hasImg
+                ? '<img src="' + esc(currentImg) + '" id="ppi-' + sid + '" style="cursor:zoom-in;width:100%;max-height:180px;object-fit:cover;border-radius:10px;display:block" onclick="openLightbox(this.src,\'Photo\')"><button type="button" class="photo-preview-remove" onclick="removePhoto(\'' + sid + '\')">\u2715</button>'
+                : '';
+            return '<div class="photo-upload">' +
+                '<div class="ep-label" style="margin-bottom:5px">Photo</div>' +
+                '<div class="photo-preview' + (hasImg ? ' on' : '') + '" id="pp-' + sid + '">' + imgHtml + '</div>' +
+                '<div class="photo-upload-btns" id="pb-' + sid + '"' + (hasImg ? ' style="display:none"' : '') + '>' +
+                '<label class="photo-btn" for="ci-' + sid + '">\uD83D\uDCF7 Cam\u00e9ra</label>' +
+                '<label class="photo-btn" for="fi-' + sid + '">\uD83D\uDDBC Fichier</label>' +
+                '</div>' +
+                '<input type="file" accept="image/*" class="hidden-file-input" id="fi-' + sid + '" onchange="handleFileInput(event,\'' + sid + '\')">' +
+                '<input type="file" accept="image/*" capture="environment" class="hidden-file-input" id="ci-' + sid + '" onchange="handleFileInput(event,\'' + sid + '\')">' +
+                '<input type="hidden" id="inp-img-' + sid + '" value="' + (hasImg ? esc(currentImg) : '') + '">' +
+                '</div>';
         }
         function triggerCamera(sid) { document.getElementById('ci-' + sid) && document.getElementById('ci-' + sid).click(); }
         function triggerFile(sid) { document.getElementById('fi-' + sid) && document.getElementById('fi-' + sid).click(); }
@@ -4244,8 +4222,23 @@
             r.readAsDataURL(file);
         }
         function setItemPhoto(sid, data) {
-            var pimg = document.getElementById('ppi-' + sid); if (pimg) pimg.src = data;
-            var pp = document.getElementById('pp-' + sid); if (pp) pp.classList.add('on');
+            var pp = document.getElementById('pp-' + sid);
+            var pimg = document.getElementById('ppi-' + sid);
+            if (pp && !pimg) {
+                pimg = document.createElement('img');
+                pimg.id = 'ppi-' + sid;
+                pimg.style.cssText = 'cursor:zoom-in;width:100%;max-height:180px;object-fit:cover;border-radius:10px;display:block';
+                pimg.onclick = function () { openLightbox(this.src, 'Photo'); };
+                pp.appendChild(pimg);
+                var rem = document.createElement('button');
+                rem.type = 'button';
+                rem.className = 'photo-preview-remove';
+                rem.textContent = '\u2715';
+                rem.onclick = function () { removePhoto(sid); };
+                pp.appendChild(rem);
+            }
+            if (pimg) pimg.src = data;
+            if (pp) pp.classList.add('on');
             var pb = document.getElementById('pb-' + sid); if (pb) pb.style.display = 'none';
             var h = document.getElementById('inp-img-' + sid); if (h) h.value = data;
         }
@@ -4368,7 +4361,7 @@
                 ip.id = 'inp-price-' + sid; ip.value = price; ip.placeholder = 'Ex: 349';
                 col1.appendChild(lp); col1.appendChild(ip);
                 var col2 = document.createElement('div'); col2.className = 'ep-col';
-                var ls = document.createElement('div'); ls.className = 'ep-label'; ls.textContent = 'Magasin choisi';
+                var ls = document.createElement('div'); ls.className = 'ep-label'; ls.textContent = 'Boutique d\u2019achat';
                 var selS = document.createElement('select'); selS.className = 'ep-select'; selS.id = 'inp-store-' + sid;
                 selS.innerHTML = getStoreOptions(store);
                 col2.appendChild(ls); col2.appendChild(selS);
@@ -4379,7 +4372,19 @@
                 var lpay = document.createElement('div'); lpay.className = 'ep-label'; lpay.textContent = 'Pay\u00e9 / pr\u00e9vu par';
                 var selP = document.createElement('select'); selP.className = 'ep-select'; selP.id = 'inp-payer-' + sid;
                 selP.innerHTML = getParticipantOptions(payer, true);
-                col3.appendChild(lpay); col3.appendChild(selP); row2.appendChild(col3); panel.appendChild(row2);
+                col3.appendChild(lpay); col3.appendChild(selP);
+                var col4 = document.createElement('div'); col4.className = 'ep-col';
+                var lphase = document.createElement('div'); lphase.className = 'ep-label'; lphase.textContent = 'P\u00e9riode';
+                var selPh = document.createElement('select'); selPh.className = 'ep-select'; selPh.id = 'inp-phase-' + sid;
+                Object.keys(PHASES).forEach(function (key) {
+                    var opt = document.createElement('option');
+                    opt.value = key;
+                    opt.textContent = PHASES[key];
+                    if (key === getEffectivePhase(item)) opt.selected = true;
+                    selPh.appendChild(opt);
+                });
+                col4.appendChild(lphase); col4.appendChild(selPh);
+                row2.appendChild(col3); row2.appendChild(col4); panel.appendChild(row2);
 
                 panel.insertAdjacentHTML('beforeend', buildPhotoUploadSection(sid, imageSrc));
 
@@ -4409,15 +4414,20 @@
             var s = document.getElementById('inp-store-' + sid);
             var img = document.getElementById('inp-img-' + sid);
             var pay = document.getElementById('inp-payer-' + sid);
+            var phase = document.getElementById('inp-phase-' + sid);
             if (p) state[id].price = parseFloat(p.value) || state[id].price;
             if (s) state[id].store = s.value;
             if (img) state[id].img = img.value;
             if (pay) state[id].payer = pay.value;
+            if (phase) state[id].phase = phase.value;
             Object.values(customItems).forEach(function (arr) {
                 var ci = (arr || []).find(function (i) { return i.id === id; });
                 if (ci && img) ci.img = img.value;
+                if (ci && phase) ci.phase = phase.value;
             });
-            save(); buildItemsEnhanced(roomKey); updateHero();
+            if (phase) currentPhase[roomKey] = phase.value;
+            saveCustomItems(); save();
+            buildPhaseNav(roomKey); buildItemsEnhanced(roomKey); updateHero();
             var btn = document.querySelector('#card-' + CSS.escape(sid) + ' .ep-save');
             if (btn) {
                 btn.textContent = 'Enregistr\u00e9 \u2713'; btn.style.background = '#2D5A30';
